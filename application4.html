@@ -109,7 +109,7 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
         const { createClient } = supabase;
         const supabaseClient = createClient(supabaseUrl, supabaseKey);
-        emailjs.init({ publicKey: "cUpWZScep0kGgXEUm" });
+        emailjs.init("cUpWZScep0kGgXEUm");
 
         // --- 2. LOAD DATA AND POPULATE SUMMARY ---
         const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
@@ -187,11 +187,17 @@
                 localStorage.removeItem('applicationData');
                 window.location.href = 'index.html';
 
-            } catch (error) {
-                alert(error.message);
-                submitButton.disabled = false;
-                submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
-            }
+      } catch (error) {
+    // This will print the actual error object to the console so you can read it
+    console.error("DETAILED ERROR:", error);
+
+    // This will alert the text message from EmailJS instead of 'undefined'
+    const displayError = error.text || error.message || "Unknown error";
+    alert("Submission stopped at Email: " + displayError);
+
+    submitButton.disabled = false;
+    submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
+}
         });
     </script>
     <script>
