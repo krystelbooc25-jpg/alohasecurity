@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application - Review & Submit</title>
+    <link rel="stylesheet" href="application.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+    <div class="application-container">
+        <header class="app-header">
+            <a href="application3.html" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
+            <div class="logo">
+                <img src="https://i.imgur.com/your-logo.png" alt="Logo">
+                <div class="logo-text">
+                    <h2>Job Application</h2>
+                    <p>Aloha Security Agency</p>
+                </div>
+            </div>
+            <div class="step-counter">Step 4 of 4</div>
+        </header>
+
+        <nav class="progress-bar">
+            <div class="step complete"><div class="step-number"><i class="fas fa-check"></i></div><div class="step-label">Personal Info</div></div>
+            <div class="connector active"></div>
+            <div class="step complete"><div class="step-number"><i class="fas fa-check"></i></div><div class="step-label">Position Details</div></div>
+            <div class="connector active"></div>
+            <div class="step complete"><div class="step-number"><i class="fas fa-check"></i></div><div class="step-label">Experience</div></div>
+            <div class="connector active"></div>
+            <div class="step active"><div class="step-number">4</div><div class="step-label">Review & Submit</div></div>
+        </nav>
+
+        <main class="form-container">
+            <div class="form-header">
+                <div class="form-icon"><i class="fas fa-file-signature"></i></div>
+                <div class="form-title">
+                    <h3>Review & Submit</h3>
+                    <p>Please review your information and complete your application</p>
+                </div>
+            </div>
+
+            <form class="application-form" id="final-form" novalidate>
+                <div class="application-summary">
+                    <h4>Application Summary</h4>
+                    <div class="summary-grid">
+                        <p><strong>Name:</strong></p><p id="summary-name">Loading...</p>
+                        <p><strong>Position:</strong></p><p id="summary-position">Loading...</p>
+                        <p><strong>Email:</strong></p><p id="summary-email">Loading...</p>
+                        <p><strong>Availability:</strong></p><p id="summary-availability">Loading...</p>
+                    </div>
+                </div>
+
+                <div class="form-group full-width" style="margin-top: 20px;">
+                    <label>Required Documents</label>
+                    <div class="file-upload-container">
+                        <div class="file-upload-box">
+                            <i class="fas fa-upload"></i>
+                            <span id="resume-file-name">Resume/CV *</span>
+                            <small>PDF, DOC (Max 5MB)</small>
+                            <input type="file" id="resume-cv" name="resume-cv">
+                        </div>
+                        <div class="file-upload-box">
+                            <i class="fas fa-upload"></i>
+                            <span id="certificates-file-name">Certificates</span>
+                            <small>PDF, JPG (Max 5MB)</small>
+                            <input type="file" id="certificates-file" name="certificates">
+                        </div>
+                        <div class="file-upload-box">
+                            <i class="fas fa-upload"></i>
+                            <span id="valid-id-file-name">Valid ID *</span>
+                            <small>PDF, JPG (Max 5MB)</small>
+                            <input type="file" id="valid-id" name="valid-id">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="consent-group">
+                    <input type="checkbox" id="consent-background" name="consent-background">
+                    <label for="consent-background">I consent to a background check.</label>
+                </div>
+                <div class="consent-group">
+                    <input type="checkbox" id="consent-drug-test" name="consent-drug-test">
+                    <label for="consent-drug-test">I consent to pre-employment drug testing.</label>
+                </div>
+                <div class="consent-group">
+                    <input type="checkbox" id="consent-truthfulness" name="consent-truthfulness">
+                    <label for="consent-truthfulness">I certify that the information provided is true and complete.</label>
+                </div>
+            </form>
+            <div id="offline-overlay">
+                <div>
+                    <h1>You are Offline</h1>
+                    <p>Please check your internet connection.</p>
+                </div>
+            </div>
+            <footer class="form-footer">
+                <a href="application3.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Previous</a>
+                <button type="submit" form="final-form" id="submit-button" class="btn btn-success"><i class="fas fa-paper-plane"></i> Submit Application</button>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // --- 1. INITIALIZE CLIENTS ---
+        const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+        emailjs.init({ publicKey: "cUpWZScep0kGgXEUm" });
+
+        // --- 2. LOAD DATA AND POPULATE SUMMARY ---
+        const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
+        document.getElementById('summary-name').textContent = `${applicationData.first_name || ''} ${applicationData.last_name || ''}`;
+        document.getElementById('summary-email').textContent = applicationData.email || 'N/A';
+        document.getElementById('summary-position').textContent = applicationData.desired_position || 'N/A';
+        document.getElementById('summary-availability').textContent = applicationData.availability || 'N/A';
+
+        // --- 3. HANDLE FILE NAME DISPLAY ---
+        document.getElementById('resume-cv').addEventListener('change', (e) => { document.getElementById('resume-file-name').textContent = e.target.files[0]?.name || 'Resume/CV *'; });
+        document.getElementById('certificates-file').addEventListener('change', (e) => { document.getElementById('certificates-file-name').textContent = e.target.files[0]?.name || 'Certificates'; });
+        document.getElementById('valid-id').addEventListener('change', (e) => { document.getElementById('valid-id-file-name').textContent = e.target.files[0]?.name || 'Valid ID *'; });
+
+        // --- 4. HANDLE FINAL SUBMISSION ---
+        document.getElementById('final-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const submitButton = document.getElementById('submit-button');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+            try {
+                const resumeFile = document.getElementById('resume-cv').files[0];
+                const validIdFile = document.getElementById('valid-id').files[0];
+                if (!resumeFile || !validIdFile) { 
+                    throw new Error('Please make sure you have selected a Resume/CV and a Valid ID.'); 
+                }
+                
+                const consentBackground = document.getElementById('consent-background').checked;
+                const consentDrugTest = document.getElementById('consent-drug-test').checked;
+                const consentTruthfulness = document.getElementById('consent-truthfulness').checked;
+                if (!consentBackground || !consentDrugTest || !consentTruthfulness) { 
+                    throw new Error('You must agree to all consent statements to proceed.'); 
+                }
+
+                const certificatesFile = document.getElementById('certificates-file').files[0];
+                const timestamp = Date.now();
+                const resumePath = `resumes/${timestamp}-${resumeFile.name}`;
+                const { error: resumeError } = await supabaseClient.storage.from('applicant-files').upload(resumePath, resumeFile);
+                if (resumeError) throw resumeError;
+                const { data: resumeUrlData } = supabaseClient.storage.from('applicant-files').getPublicUrl(resumePath);
+                applicationData.resume_url = resumeUrlData.publicUrl;
+
+                const validIdPath = `ids/${timestamp}-${validIdFile.name}`;
+                const { error: idError } = await supabaseClient.storage.from('applicant-files').upload(validIdPath, validIdFile);
+                if (idError) throw idError;
+                const { data: idUrlData } = supabaseClient.storage.from('applicant-files').getPublicUrl(validIdPath);
+                applicationData.valid_id_url = idUrlData.publicUrl;
+                
+                if (certificatesFile) {
+                    const certsPath = `certs/${timestamp}-${certificatesFile.name}`;
+                    const { error: certsError } = await supabaseClient.storage.from('applicant-files').upload(certsPath, certificatesFile);
+                    if (certsError) throw certsError;
+                    const { data: certsUrlData } = supabaseClient.storage.from('applicant-files').getPublicUrl(certsPath);
+                    applicationData.certificates_url = certsUrlData.publicUrl;
+                }
+
+                applicationData.consent_background = consentBackground;
+                applicationData.consent_drug_test = consentDrugTest;
+                applicationData.consent_truthfulness = consentTruthfulness;
+                
+                const { data, error: insertError } = await supabaseClient.from('applicants').insert([applicationData]).select();
+                if (insertError) throw insertError;
+                
+                console.log('Successfully saved data to database:', data);
+
+                const emailParams = {
+                    applicant_name: `${applicationData.first_name} ${applicationData.last_name}`,
+                    applicant_email: applicationData.email,
+                    position: applicationData.desired_position,
+                };
+                await emailjs.send('service_zgrksga', 'template_zwwho8l', emailParams);
+                console.log('Successfully sent email notification.');
+                
+                alert('Application submitted successfully! Thank you.');
+                localStorage.removeItem('applicationData');
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                alert(error.message);
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
+            }
+        });
+    </script>
+    <script>
+        const offlineOverlay = document.getElementById('offline-overlay');
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineOverlay.style.display = 'none';
+            } else {
+                offlineOverlay.style.display = 'flex';
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Initial check
+        updateOnlineStatus();
+    </script>
+</body>
+</html>

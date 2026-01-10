@@ -1,0 +1,200 @@
+/* General Body Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    color: #333;
+    overflow: hidden; /* Prevents scrollbars from the full-height layout */
+}
+
+.login-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Panel Styling */
+.login-panel {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+/* Left Branding Panel */
+.branding-panel {
+    background-color: #002b5c; /* Main brand color */
+    color: #fff;
+    text-align: center;
+}
+
+.branding-content {
+    max-width: 400px;
+}
+
+.branding-panel .logo {
+    width: 80px;
+    margin-bottom: 20px;
+}
+
+.branding-panel h1 {
+    font-size: 36px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.branding-panel p {
+    font-size: 16px;
+    line-height: 1.6;
+    opacity: 0.8;
+    margin-bottom: 30px;
+}
+
+.back-to-site-link {
+    color: #fff;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 10px 20px;
+    border-radius: 50px;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.back-to-site-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
+}
+
+/* Right Form Panel */
+.form-panel {
+    background-color: #f8f9fa;
+}
+
+.form-content {
+    width: 100%;
+    max-width: 380px;
+}
+
+.form-panel h2 {
+    font-size: 32px;
+    color: #002b5c;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.form-panel p {
+    color: #666;
+    margin-bottom: 40px;
+}
+
+/* Input Fields with Icons */
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px 15px 15px 45px; /* Make space for the icon */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box; /* Important for padding and width calculation */
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #002b5c;
+    box-shadow: 0 0 0 3px rgba(0, 43, 92, 0.15);
+}
+
+/* Form Options */
+.options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.forgot-password {
+    color: #002b5c;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+/* Login Button */
+/* Login Button */
+.btn-login {
+    display: block; /* ADD THIS: Makes the link fill the width */
+    box-sizing: border-box; /* ADD THIS: Ensures padding is inside the width */
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    background-color: #002b5c;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center; /* ADD THIS: Centers the text inside */
+    text-decoration: none; /* ADD THIS: Removes the underline */
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-login:hover {
+    background-color: #001f44; /* A darker shade for hover */
+}
+
+.btn-login:active {
+    transform: scale(0.98);
+}
+
+/* Form Footer */
+.form-footer {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.form-footer p {
+    color: #999;
+    font-size: 12px;
+}
+
+/* Responsive Design for smaller screens */
+@media (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+        height: auto;
+        overflow: auto;
+    }
+
+    .branding-panel {
+        display: none; /* Hide the branding panel on mobile for a simpler view */
+    }
+
+    .form-panel {
+        min-height: 100vh;
+    }
+}

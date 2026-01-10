@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Aloha Security</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="logo-text">
+                    <h1>Admin Dashboard</h1>
+                    <p>Application Management System</p>
+                </div>
+            </div>
+            <button id="logout-button" class="btn btn-logout">Logout</button>
+        </header>
+
+        <main class="dashboard-main">
+            <section class="summary-stats">
+                <div class="stat-card"><span id="total-apps" class="stat-number">0</span><span class="stat-label">Total Applications</span></div>
+                <div class="stat-card"><span id="pending-apps" class="stat-number" style="color: #f39c12;">0</span><span class="stat-label">Pending</span></div>
+                <div class="stat-card"><span id="reviewed-apps" class="stat-number" style="color: #3498db;">0</span><span class="stat-label">Reviewed</span></div>
+                <div class="stat-card"><span id="approved-apps" class="stat-number" style="color: #28a745;">0</span><span class="stat-label">Approved</span></div>
+                <div class="stat-card"><span id="rejected-apps" class="stat-number" style="color: #e74c3c;">0</span><span class="stat-label">Rejected</span></div>
+            </section>
+
+            <nav class="tabs">
+                <a href="#" class="tab active">Applications</a>
+                <a href="#" class="tab">Reports</a>
+            </nav>
+
+            <div class="content-area">
+                <div class="applications-list">
+                    <h3><i class="fas fa-users"></i> Applications (<span id="table-count">0</span>)</h3>
+                    <div class="table-header">
+                        <div>Applicant</div>
+                        <div>Position</div>
+                        <div>Contact</div>
+                        <div>Status</div>
+                        <div>Submitted</div>
+                        <div>Actions</div>
+                    </div>
+                    <div id="applicant-table-body"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="offline-overlay">
+        <div>
+            <h1>You are Offline</h1>
+            <p>Please check your internet connection.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. INITIALIZE SUPABASE CLIENT ---
+        const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+        // --- 2. PAGE SECURITY ---
+        async function checkUserSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = 'AdminLogin.html';
+            } else {
+                fetchAndDisplayApplicants();
+            }
+        }
+        
+        // --- 3. LOGOUT BUTTON ---
+        document.getElementById('logout-button').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'AdminLogin.html';
+        });
+
+        // --- 4. FETCH AND DISPLAY APPLICANT DATA ---
+        async function fetchAndDisplayApplicants() {
+            const { data: applicants, error } = await supabaseClient.from('applicants').select('*').order('created_at', { ascending: false });
+            if (error) {
+                console.error('Error fetching applicants:', error);
+                return;
+            }
+
+            const tableBody = document.getElementById('applicant-table-body');
+            tableBody.innerHTML = '';
+
+            document.getElementById('total-apps').textContent = applicants.length;
+            document.getElementById('table-count').textContent = applicants.length;
+            document.getElementById('pending-apps').textContent = applicants.filter(a => a.status === 'Pending').length;
+            document.getElementById('reviewed-apps').textContent = applicants.filter(a => a.status === 'Reviewed').length;
+            document.getElementById('approved-apps').textContent = applicants.filter(a => a.status === 'Approved').length;
+            document.getElementById('rejected-apps').textContent = applicants.filter(a => a.status === 'Rejected').length;
+
+            applicants.forEach(applicant => {
+                const date = new Date(applicant.created_at).toLocaleDateString();
+                const status = applicant.status || 'Pending';
+                const statusClass = status.toLowerCase();
+
+                const row = `
+                    <div class="application-row">
+                        <div><span class="name">${applicant.first_name || ''} ${applicant.last_name || ''}</span></div>
+                        <div><span class="position-tag">${applicant.desired_position || 'N/A'}</span></div>
+                        <div><span class="contact"><i class="fas fa-envelope"></i> ${applicant.email || ''}</span></div>
+                        <div><span class="status ${statusClass}">${status}</span></div>
+                        <div><i class="fas fa-calendar-alt"></i> ${date}</div>
+                        <div class="actions">
+                            <div class="dropdown">
+                                <button class="btn-icon" title="Actions"><i class="fas fa-ellipsis-v"></i></button>
+                                <div class="dropdown-content">
+                                    <a href="view-applicant.html?id=${applicant.id}" style="text-decoration:none;"><button><i class="fas fa-eye"></i> View Details</button></a>
+                                    <button onclick="updateStatus('${applicant.id}', 'Approved')"><i class="fas fa-check"></i> Approve</button>
+                                    <button onclick="updateStatus('${applicant.id}', 'Rejected')"><i class="fas fa-times"></i> Reject</button>
+                                    <button onclick="updateStatus('${applicant.id}', 'Reviewed')"><i class="fas fa-search"></i> Mark as Reviewed</button>
+                                    <button onclick="deleteApplicant('${applicant.id}')" class="delete-btn"><i class="fas fa-trash"></i> Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // --- 5. FUNCTIONS TO UPDATE STATUS AND DELETE ---
+        async function updateStatus(applicantId, newStatus) {
+            const { error } = await supabaseClient.from('applicants').update({ status: newStatus }).eq('id', applicantId);
+            if (error) {
+                alert('Failed to update status.');
+            } else {
+                fetchAndDisplayApplicants();
+            }
+        }
+
+        async function deleteApplicant(applicantId) {
+            if (confirm('Are you sure you want to permanently delete this application?')) {
+                const { error } = await supabaseClient.from('applicants').delete().eq('id', applicantId);
+                if (error) {
+                    alert('Failed to delete application.');
+                } else {
+                    fetchAndDisplayApplicants();
+                }
+            }
+        }
+        
+        // --- 6. OFFLINE/ONLINE STATUS CHECKER ---
+        const offlineOverlay = document.getElementById('offline-overlay');
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineOverlay.style.display = 'none';
+                // When coming back online, try to fetch data again
+                fetchAndDisplayApplicants();
+            } else {
+                offlineOverlay.style.display = 'flex';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // --- 7. INITIAL PAGE LOAD CHECKS ---
+        checkUserSession(); // Check if user is logged in
+        updateOnlineStatus(); // Check initial online status
+    </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+/* General Body Styles */
+body {
+    background-color: #f0f4f8;
+    font-family: sans-serif;
+    margin: 0;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.application-container {
+    width: 100%;
+    max-width: 1000px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* App Header */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e0e0e0;
+}
+.back-link {
+    text-decoration: none;
+    color: #555;
+    font-size: 16px;
+}
+.back-link i { margin-right: 8px; }
+.app-header .logo { display: flex; align-items: center; }
+.app-header .logo img { height: 40px; margin-right: 15px; }
+.app-header .logo h2 { margin: 0; font-size: 22px; color: #002b5c; }
+.app-header .logo p { margin: 0; color: #666; }
+.step-counter { font-size: 16px; color: #555; }
+
+.progress-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px 50px;
+    background-color: #f8f9fa;
+}
+.step { text-align: center; color: #999; flex-basis: 0; flex-grow: 1; position: relative; }
+.step-number {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    background-color: #fff;
+    display: flex; justify-content: center; align-items: center;
+    margin: 0 auto 10px;
+    font-weight: bold;
+}
+.step-label { font-size: 14px; }
+.step.active .step-number { border-color: #002b5c; background-color: #002b5c; color: #fff; }
+.step.active { color: #002b5c; font-weight: bold; }
+.connector {
+    flex-grow: 2;
+    height: 2px;
+    background-color: #ccc;
+    margin: 0 -20px; 
+    transform: translateY(-15px); 
+}
+
+.form-container { padding: 40px 50px; }
+.form-header { display: flex; align-items: center; margin-bottom: 30px; }
+.form-icon {
+    width: 60px; height: 60px;
+    background-color: #e6eef7;
+    color: #002b5c;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin-right: 20px;
+}
+.form-title h3 { margin: 0; font-size: 24px; color: #002b5c; }
+.form-title p { margin: 0; color: #666; }
+
+/* Form Elements */
+.application-form { display: flex; flex-direction: column; gap: 20px; }
+.form-row { display: flex; gap: 20px; }
+.form-group { flex: 1; display: flex; flex-direction: column; }
+.form-group.full-width { flex-basis: 100%; }
+.form-group label { margin-bottom: 8px; font-weight: bold; color: #333; }
+.form-group input, .form-group select {
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #002b5c;
+    box-shadow: 0 0 0 2px rgba(0, 43, 92, 0.2);
+}
+.date-input-container { position: relative; }
+.date-input-container i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+}
+
+/* Footer Buttons */
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+.btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-primary { background-color: #002b5c; color: #fff; }
+.btn-secondary { background-color: #f0f0f0; color: #888; border: 1px solid #ccc; }
+.btn-secondary[disabled] { cursor: not-allowed; }
+
+
+.progress-bar .step.complete .step-number {
+    background-color: #e6eef7;
+    border-color: #002b5c;
+    color: #002b5c;
+}
+
+.progress-bar .step.complete .step-label {
+    color: #333; 
+}
+
+.progress-bar .connector.active {
+    background-color: #002b5c;
+}
+
+
+
+.form-group textarea {
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    font-family: sans-serif;
+    resize: vertical; 
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: #002b5c;
+    box-shadow: 0 0 0 2px rgba(0, 43, 92, 0.2);
+}
+
+.file-upload-container {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.file-upload-box {
+    flex: 1;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    color: #666;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.file-upload-box:hover {
+    border-color: #002b5c;
+    background-color: #f8f9fa;
+}
+
+.file-upload-box i {
+    font-size: 24px;
+    color: #002b5c;
+    margin-bottom: 10px;
+}
+
+.file-upload-box span {
+    display: block;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.file-upload-box small {
+    display: block;
+    font-size: 12px;
+}
+
+.file-upload-box input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+
+.consent-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.consent-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.consent-group label {
+    font-weight: normal;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.application-summary {
+    background-color: #f0f4f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 25px;
+    margin-top: 20px;
+}
+
+.application-summary h4 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: #002b5c;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    gap: 10px 20px;
+}
+
+.summary-grid p {
+    margin: 0;
+    font-size: 15px;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: #fff;
+}

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application - Personal Information</title>
+    <link rel="stylesheet" href="application.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <div class="application-container">
+        <header class="app-header">
+            <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
+            <div class="logo">
+                <img src="https://i.imgur.com/your-logo.png" alt="Logo">
+                <div class="logo-text">
+                    <h2>Job Application</h2>
+                    <p>Aloha Security Agency</p>
+                </div>
+            </div>
+            <div class="step-counter">Step 1 of 4</div>
+        </header>
+
+        <nav class="progress-bar">
+            <div class="step active"><div class="step-number">1</div><div class="step-label">Personal Info</div></div>
+            <div class="connector"></div>
+            <div class="step"><div class="step-number">2</div><div class="step-label">Position Details</div></div>
+            <div class="connector"></div>
+            <div class="step"><div class="step-number">3</div><div class="step-label">Experience</div></div>
+            <div class="connector"></div>
+            <div class="step"><div class="step-number">4</div><div class="step-label">Review & Submit</div></div>
+        </nav>
+
+        <main class="form-container">
+            <div class="form-header">
+                <div class="form-icon"><i class="fas fa-user"></i></div>
+                <div class="form-title">
+                    <h3>Personal Information</h3>
+                    <p>Please provide your basic personal details</p>
+                </div>
+            </div>
+
+            <form class="application-form" id="step1-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first-name">First Name *</label>
+                        <input type="text" id="first-name" name="first-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last-name">Last Name *</label>
+                        <input type="text" id="last-name" name="last-name" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="street-address">Street Address *</label>
+                        <input type="text" id="street-address" name="street-address" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City *</label>
+                        <input type="text" id="city" name="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State *</label>
+                        <select id="state" name="state" required>
+                            <option value="">Select City</option>
+                            <option value="Manila">Manila</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="zip-code">ZIP Code *</label>
+                        <input type="text" id="zip-code" name="zip-code" required>
+                    </div>
+                </div>
+                 <div class="form-row">
+                    <div class="form-group">
+                        <label for="dob">Date of Birth *</label>
+                        <div class="date-input-container">
+                             <input type="text" id="dob" name="dob" placeholder="dd/mm/yyyy" required>
+                             <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div id="offline-overlay">
+                <div>
+                    <h1>You are Offline</h1>
+                    <p>Please check your internet connection.</p>
+                </div>
+            </div>
+            <footer class="form-footer">
+                <button type="button" class="btn btn-secondary" disabled>
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button type="submit" form="step1-form" class="btn btn-primary">Continue</button>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // Load existing data from localStorage if available
+        const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
+
+        document.getElementById('first-name').value = applicationData.first_name || '';
+        document.getElementById('last-name').value = applicationData.last_name || '';
+        document.getElementById('email').value = applicationData.email || '';
+        document.getElementById('phone').value = applicationData.phone || '';
+        document.getElementById('street-address').value = applicationData.street_address || '';
+        document.getElementById('city').value = applicationData.city || '';
+        document.getElementById('state').value = applicationData.state || '';
+        document.getElementById('zip-code').value = applicationData.zip_code || '';
+        document.getElementById('dob').value = applicationData.dob || '';
+
+
+        // Save data to localStorage and move to the next step
+        document.getElementById('step1-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent page reload
+
+            // Save form data into our object
+            applicationData.first_name = document.getElementById('first-name').value;
+            applicationData.last_name = document.getElementById('last-name').value;
+            applicationData.email = document.getElementById('email').value;
+            applicationData.phone = document.getElementById('phone').value;
+            applicationData.street_address = document.getElementById('street-address').value;
+            applicationData.city = document.getElementById('city').value;
+            applicationData.state = document.getElementById('state').value;
+            applicationData.zip_code = document.getElementById('zip-code').value;
+            applicationData.dob = document.getElementById('dob').value;
+
+            // Store the updated object in localStorage
+            localStorage.setItem('applicationData', JSON.stringify(applicationData));
+
+            // Go to the next page
+            window.location.href = 'application2.html';
+        });
+    </script>
+    <script>
+        const offlineOverlay = document.getElementById('offline-overlay');
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineOverlay.style.display = 'none';
+            } else {
+                offlineOverlay.style.display = 'flex';
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Initial check
+        updateOnlineStatus();
+    </script>
+</body>
+</html>

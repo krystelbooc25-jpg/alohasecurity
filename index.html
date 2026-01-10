@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aloha Security Agency</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="spinner"></div>
+    </div>
+
+    <header>
+        <div class="container">
+            <div class="logo">
+                <!-- THIS IS THE CHANGE -->
+                <img src="Resources/logo.jpg" alt="Aloha Security Agency Logo">
+                <div class="logo-text">
+                    <h1>Aloha Security Agency</h1>
+                    <p>Your Trusted Security Partner</p>
+                </div>
+            </div>
+            <nav>
+                <a href="AdminLogin.html" class="btn btn-secondary">Admin Login</a>
+                <a href="application.html" class="btn btn-primary">Apply Now</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-overlay"></div>
+            <div class="container hero-content">
+                <h2>Join Our Elite Security Team</h2>
+                <p>Protecting what matters most. Build a career with a trusted and professional agency.</p>
+                <a href="application.html" class="btn btn-primary hero-btn"><i class="fas fa-file-alt"></i> Start Your Application</a>
+            </div>
+        </section>
+
+        <section class="why-choose-us">
+            <div class="container">
+                 <h2>Why Choose Aloha Security?</h2>
+                 <div class="features">
+                    <div class="feature-item">
+                        <div class="icon"><i class="fas fa-users"></i></div>
+                        <h3>Professional Training</h3>
+                        <p>Comprehensive security training programs and ongoing professional development.</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <h3>Local Opportunities</h3>
+                        <p>Serve your community across multiple locations with flexible scheduling options.</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon"><i class="fas fa-check-circle"></i></div>
+                        <h3>Competitive Benefits</h3>
+                        <p>Excellent compensation package with health benefits and career advancement.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <div id="offline-overlay">
+            <div>
+                <h1>You are Offline</h1>
+                <p>Please check your internet connection.</p>
+            </div>
+        </div>
+        
+    </main>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-column"><p>&copy; 2025 Aloha Security Agency. All Rights Reserved.</p></div>
+        </div>
+    </footer>
+
+    <script>
+        window.addEventListener('load', () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        });
+    </script>
+</body>
+</html>
+
+
+    <script>
+        // Simple loading screen logic
+        window.addEventListener('load', () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            // Fade out the loading screen
+            loadingScreen.style.opacity = '0';
+            // After fade out, hide it so it's not clickable
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500); // 0.5 seconds for the fade
+        });
+    </script>
+    <script>
+        const offlineOverlay = document.getElementById('offline-overlay');
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineOverlay.style.display = 'none';
+            } else {
+                offlineOverlay.style.display = 'flex';
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Initial check
+        updateOnlineStatus();
+    </script>
+</body>
+</html>

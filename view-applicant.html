@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Applicant Details</title>
+    <link rel="stylesheet" href="view-applicant.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+            <h1>Applicant Details</h1>
+        </header>
+
+        <div class="applicant-card">
+            <div class="card-header">
+                <div class="profile-info">
+                    <div class="avatar"><i class="fas fa-user"></i></div>
+                    <div>
+                        <h2 id="applicant-name">Loading...</h2>
+                        <p id="applicant-position">Applying for: Loading...</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <a id="download-resume-btn" href="#" target="_blank" class="btn btn-secondary"><i class="fas fa-download"></i> Download Resume</a>
+                    <a id="email-applicant-btn" href="#" class="btn btn-primary"><i class="fas fa-envelope"></i> Email Applicant</a>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="detail-section">
+                    <h3><i class="fas fa-info-circle"></i> Personal Information</h3>
+                    <div class="grid-layout">
+                        <p><strong>Email:</strong> <span id="applicant-email"></span></p>
+                        <p><strong>Phone:</strong> <span id="applicant-phone"></span></p>
+                        <p><strong>Address:</strong> <span id="applicant-address"></span></p>
+                        <p><strong>Date of Birth:</strong> <span id="applicant-dob"></span></p>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h3><i class="fas fa-briefcase"></i> Position Details</h3>
+                    <div class="grid-layout">
+                        <p><strong>Availability:</strong> <span id="applicant-availability"></span></p>
+                        <p><strong>Start Date:</strong> <span id="applicant-start-date"></span></p>
+                        <p><strong>Desired Salary:</strong> <span id="applicant-salary"></span></p>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h3><i class="fas fa-file-alt"></i> Experience & Background</h3>
+                    <p><strong>Security Experience:</strong></p>
+                    <pre id="applicant-experience"></pre>
+                    <p><strong>Education:</strong></p>
+                    <pre id="applicant-education"></pre>
+                    <p><strong>References:</strong></p>
+                    <pre id="applicant-references"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="offline-overlay">
+        <div>
+            <h1>You are Offline</h1>
+            <p>Please check your internet connection.</p>
+        </div>
+    </div>
+
+   <script>
+        const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+        async function loadApplicantDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const applicantId = urlParams.get('id');
+            if (!applicantId) {
+                document.body.innerHTML = '<h1>Error: No applicant ID provided.</h1>';
+                return;
+            }
+
+            const { data: applicant, error } = await supabaseClient.from('applicants').select('*').eq('id', applicantId).single();
+            if (error || !applicant) {
+                document.body.innerHTML = '<h1>Error: Could not find applicant.</h1>';
+                return;
+            }
+
+        const or_na = (text) => text || 'N/A';
+        document.getElementById('applicant-name').textContent = `${or_na(applicant.first_name)} ${or_na(applicant.last_name)}`;
+        document.getElementById('applicant-position').textContent = `Applying for: ${or_na(applicant.desired_position)}`;
+        document.getElementById('applicant-email').textContent = or_na(applicant.email);
+        document.getElementById('applicant-phone').textContent = or_na(applicant.phone);
+        document.getElementById('applicant-address').textContent = `${or_na(applicant.street_address)}, ${or_na(applicant.city)}`;
+        document.getElementById('applicant-dob').textContent = or_na(applicant.dob);
+        document.getElementById('applicant-availability').textContent = or_na(applicant.availability);
+        document.getElementById('applicant-start-date').textContent = or_na(applicant.start_date);
+        document.getElementById('applicant-salary').textContent = or_na(applicant.salary_range);
+        document.getElementById('applicant-experience').textContent = or_na(applicant.security_experience);
+        document.getElementById('applicant-education').textContent = or_na(applicant.education_background);
+        document.getElementById('applicant-references').textContent = or_na(applicant.references);
+
+        const downloadBtn = document.getElementById('download-resume-btn');
+        if (applicant.resume_url) {
+            downloadBtn.href = applicant.resume_url;
+        } else {
+            downloadBtn.style.display = 'none';
+        }
+
+        const emailBtn = document.getElementById('email-applicant-btn');
+        if (applicant.email) {
+            // THIS IS THE FIX: We add a click event listener
+            emailBtn.addEventListener('click', (event) => {
+                    event.preventDefault(); // Stop the default link behavior for a moment
+                    // Attempt to open the mail client
+                    window.location.href = `mailto:${applicant.email}`;
+                    // This provides a helpful message if it fails
+                    alert("Attempting to open your default email client. If nothing happens, please ensure one is configured on your computer.");
+                });
+            } else {
+                emailBtn.style.display = 'none';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadApplicantDetails);
+    </script>
+    <script>
+        const offlineOverlay = document.getElementById('offline-overlay');
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineOverlay.style.display = 'none';
+            } else {
+                offlineOverlay.style.display = 'flex';
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Initial check
+        updateOnlineStatus();
+    </script>
+</body>
+</html>
