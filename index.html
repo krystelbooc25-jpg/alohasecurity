@@ -7,10 +7,10 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* --- SLIDER CSS --- */
+        /* --- UPDATED SLIDER CSS --- */
         .hero {
             position: relative;
-            height: 80vh; /* Adjust height based on preference */
+            height: 80vh;
             min-height: 500px;
             overflow: hidden;
             display: flex;
@@ -18,41 +18,30 @@
             justify-content: center;
             color: white;
             text-align: center;
-            background-color: #1a1a1a; /* Fallback color */
+            background-color: #1a1a1a;
         }
 
         .hero-slides {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             z-index: 1;
         }
 
         .slide {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover;
             background-position: center;
             opacity: 0;
-            transition: opacity 1.5s ease-in-out; /* Smooth fade effect */
+            transition: opacity 1s ease-in-out;
         }
 
-        .slide.active {
-            opacity: 1;
-        }
+        .slide.active { opacity: 1; }
 
         .hero-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* Makes text readable */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
             z-index: 2;
         }
 
@@ -63,10 +52,39 @@
             padding: 0 20px;
         }
 
-        /* Responsive Fix for Slider */
-        @media (max-width: 768px) {
-            .hero { height: 60vh; }
-            .hero h2 { font-size: 2rem; }
+        /* --- NEXT & PREV BUTTONS --- */
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            background: rgba(210, 4, 45, 0.5); /* Semi-transparent Red */
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slider-btn:hover {
+            background: rgba(210, 4, 45, 1); /* Solid Red on hover */
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .prev-btn { left: 20px; }
+        .next-btn { right: 20px; }
+
+        /* Hide buttons on very small screens if preferred */
+        @media (max-width: 480px) {
+            .slider-btn { width: 40px; height: 40px; font-size: 1rem; }
+            .prev-btn { left: 10px; }
+            .next-btn { right: 10px; }
         }
     </style>
 </head>
@@ -79,7 +97,7 @@
     <header>
         <div class="container">
             <div class="logo">
-                <img src="Resources/logo.jpg" alt="Aloha Security Agency Logo">
+                <img src="Resources/logo.jpg" alt="Logo" style="height: 50px;">
                 <div class="logo-text">
                     <h1>Aloha Security Agency</h1>
                     <p>Your Trusted Security Partner</p>
@@ -92,14 +110,18 @@
     </header>
 
     <main>
-        <!-- HERO SECTION WITH SLIDER -->
         <section class="hero">
+            <!-- Slides -->
             <div class="hero-slides">
-                <!-- Palitan ang mga ito ng iyong aktwal na images sa Resources folder -->
                 <div class="slide active" style="background-image: url('Resources/1.jpg');"></div>
                 <div class="slide" style="background-image: url('Resources/2.jpg');"></div>
                 <div class="slide" style="background-image: url('Resources/3.jpg');"></div>
             </div>
+
+            <!-- Manual Controls -->
+            <button class="slider-btn prev-btn" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+            <button class="slider-btn next-btn" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+
             <div class="hero-overlay"></div>
             
             <div class="container hero-content">
@@ -109,6 +131,7 @@
             </div>
         </section>
 
+        <!-- Features Section (Why Choose Us) ... -->
         <section class="why-choose-us">
             <div class="container">
                  <h2>Why Choose Aloha Security?</h2>
@@ -131,56 +154,65 @@
                 </div>
             </div>
         </section>
-
-        <div id="offline-overlay">
-            <div>
-                <h1>You are Offline</h1>
-                <p>Please check your internet connection.</p>
-            </div>
-        </div>
     </main>
     
     <footer>
         <div class="container">
-            <div class="footer-column">
-                <p>&copy; 2025 Aloha Security Agency. All Rights Reserved.</p>
-            </div>
+            <p>&copy; 2025 Aloha Security Agency. All Rights Reserved.</p>
         </div>
     </footer>
 
     <script>
-        // --- 1. Loading Screen Logic ---
+        // 1. Loading Screen
         window.addEventListener('load', () => {
-            const loadingScreen = document.getElementById('loading-screen');
-            loadingScreen.style.opacity = '0';
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-            }, 500);
+            const ls = document.getElementById('loading-screen');
+            ls.style.opacity = '0';
+            setTimeout(() => ls.style.display = 'none', 500);
         });
 
-        // --- 2. HERO SLIDER LOGIC ---
+        // 2. HERO SLIDER LOGIC (Manual + Auto)
         let currentSlide = 0;
         const slides = document.querySelectorAll('.slide');
-        const slideInterval = 5000; // Magpapalit kada 5 seconds
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        let slideTimer;
+
+        function showSlide(index) {
+            slides.forEach(s => s.classList.remove('active'));
+            slides[index].classList.add('active');
+        }
 
         function nextSlide() {
-            slides[currentSlide].classList.remove('active');
             currentSlide = (currentSlide + 1) % slides.length;
-            slides[currentSlide].classList.add('active');
+            showSlide(currentSlide);
+            resetTimer(); // Reset auto-timer kapag pinindot ang button
         }
 
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(currentSlide);
+            resetTimer();
+        }
+
+        function startTimer() {
+            slideTimer = setInterval(() => {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            }, 5000); // 5 seconds
+        }
+
+        function resetTimer() {
+            clearInterval(slideTimer);
+            startTimer();
+        }
+
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        // Start auto-play on load
         if (slides.length > 1) {
-            setInterval(nextSlide, slideInterval);
+            startTimer();
         }
-
-        // --- 3. Offline Status Logic ---
-        const offlineOverlay = document.getElementById('offline-overlay');
-        function updateOnlineStatus() {
-            offlineOverlay.style.display = navigator.onLine ? 'none' : 'flex';
-        }
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-        updateOnlineStatus();
     </script>
 </body>
 </html>
