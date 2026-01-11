@@ -4,15 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Application - Position Details</title>
+    
+    <!-- External CSS -->
     <link rel="stylesheet" href="application.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Modern Calendar Picker (Flatpickr) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <style>
+        /* Modern adjustments for Date Picker */
+        .date-input-container {
+            position: relative;
+            width: 100%;
+        }
+        .date-input-container i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #002b5c;
+            pointer-events: none;
+            z-index: 10;
+        }
+        /* Custom styling to match your theme */
+        .flatpickr-calendar {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+            border-radius: 12px !important;
+            border: 1px solid #eee !important;
+        }
+        .flatpickr-day.selected {
+            background: #002b5c !important;
+            border-color: #002b5c !important;
+        }
+    </style>
 </head>
 <body>
     <div class="application-container">
         <header class="app-header">
             <a href="application.html" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
             <div class="logo">
-                <img src="https://i.imgur.com/your-logo.png" alt="Logo">
+                <img src="Resources/logo.jpg" alt="Logo" style="height: 45px;">
                 <div class="logo-text">
                     <h2>Job Application</h2>
                     <p>Aloha Security Agency</p>
@@ -66,7 +99,8 @@
                     <div class="form-group">
                         <label for="start-date">Available Start Date *</label>
                          <div class="date-input-container">
-                             <input type="text" id="start-date" name="start-date" placeholder="dd/mm/yyyy" required>
+                             <!-- Flatpickr will target this ID -->
+                             <input type="text" id="start-date" name="start-date" placeholder="Select Date" required>
                              <i class="fas fa-calendar-alt"></i>
                         </div>
                     </div>
@@ -117,21 +151,37 @@
     </div>
 
     <script>
+        // --- 1. INITIALIZE CALENDAR PICKER (Flatpickr) ---
+        const startPicker = flatpickr("#start-date", {
+            dateFormat: "Y-m-d",      // Database Format
+            altInput: true,           // Pretty UI Format
+            altFormat: "F j, Y",      // Example: January 15, 2025
+            minDate: "today",         // Bawal pumili ng date sa nakaraan (past)
+            disableMobile: "true",    // Consistent style on all devices
+            animate: true
+        });
+
+        // --- 2. LOAD SAVED DATA ---
         const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
 
         document.getElementById('desired-position').value = applicationData.desired_position || '';
         document.getElementById('availability').value = applicationData.availability || '';
-        document.getElementById('start-date').value = applicationData.start_date || '';
         document.getElementById('salary-range').value = applicationData.salary_range || '';
         document.getElementById('drivers-license').value = applicationData.drivers_license || '';
         document.getElementById('transportation').value = applicationData.transportation || '';
 
+        // Load Start Date into picker
+        if (applicationData.start_date) {
+            startPicker.setDate(applicationData.start_date);
+        }
+
+        // --- 3. SUBMIT LOGIC ---
         document.getElementById('step2-form').addEventListener('submit', function(event) {
             event.preventDefault();
 
             applicationData.desired_position = document.getElementById('desired-position').value;
             applicationData.availability = document.getElementById('availability').value;
-            applicationData.start_date = document.getElementById('start-date').value;
+            applicationData.start_date = document.getElementById('start-date').value; // YYYY-MM-DD
             applicationData.salary_range = document.getElementById('salary-range').value;
             applicationData.drivers_license = document.getElementById('drivers-license').value;
             applicationData.transportation = document.getElementById('transportation').value;
@@ -139,22 +189,14 @@
             localStorage.setItem('applicationData', JSON.stringify(applicationData));
             window.location.href = 'application3.html';
         });
-    </script>
-    <script>
+
+        // --- 4. OFFLINE HANDLER ---
         const offlineOverlay = document.getElementById('offline-overlay');
-
         function updateOnlineStatus() {
-            if (navigator.onLine) {
-                offlineOverlay.style.display = 'none';
-            } else {
-                offlineOverlay.style.display = 'flex';
-            }
+            offlineOverlay.style.display = navigator.onLine ? 'none' : 'flex';
         }
-
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
-
-        // Initial check
         updateOnlineStatus();
     </script>
 </body>
