@@ -90,12 +90,14 @@
                     <label for="consent-truthfulness">I certify that the information provided is true and complete.</label>
                 </div>
             </form>
+
             <div id="offline-overlay">
                 <div>
                     <h1>You are Offline</h1>
                     <p>Please check your internet connection.</p>
                 </div>
             </div>
+
             <footer class="form-footer">
                 <a href="application3.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Previous</a>
                 <button type="submit" form="final-form" id="submit-button" class="btn btn-success"><i class="fas fa-paper-plane"></i> Submit Application</button>
@@ -126,80 +128,116 @@
     document.getElementById('final-form').addEventListener('submit', async function(event) {
         event.preventDefault();
         const submitButton = document.getElementById('submit-button');
+        
+        // Initial Local UI Check
+        const consentBackground = document.getElementById('consent-background').checked;
+        const consentDrugTest = document.getElementById('consent-drug-test').checked;
+        const consentTruthfulness = document.getElementById('consent-truthfulness').checked;
+        
+        if (!consentBackground || !consentDrugTest || !consentTruthfulness) { 
+            alert('You must agree to all consent statements to proceed.');
+            return;
+        }
+
         submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking Application Status...';
 
         try {
-            // Check files
+            const email = applicationData.email;
+
+            // --- STEP 1: CHECK FOR EXISTING EMAIL RECORD ---
+            const { data: existingApps, error: fetchError } = await supabaseClient
+                .from('applicants')
+                .select('status, created_at')
+                .eq('email', email)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (fetchError) throw fetchError;
+
+            if (existingApps && existingApps.length > 0) {
+                const latestApp = existingApps[0];
+                const status = latestApp.status;
+                const lastAppliedDate = new Date(latestApp.created_at);
+                const today = new Date();
+
+                // Logic: Block if active
+                if (status === 'Pending' || status === 'Reviewed' || status === 'Approved') {
+                    throw new Error(`You have an existing application with status: ${status}. Please wait for our team to contact you.`);
+                }
+
+                // Logic: 3 Month Wait for Rejected
+                if (status === 'Rejected') {
+                    const diffTime = Math.abs(today - lastAppliedDate);
+                    const diffMonths = diffTime / (1000 * 60 * 60 * 24 * 30.44); // Average month length
+
+                    if (diffMonths < 3) {
+                        const nextDate = new Date(lastAppliedDate);
+                        nextDate.setMonth(nextDate.getMonth() + 3);
+                        throw new Error(`Your previous application was rejected. You can re-apply after 3 months (available starting ${nextDate.toLocaleDateString()}).`);
+                    }
+                }
+            }
+
+            // --- STEP 2: PROCEED TO UPLOAD FILES ---
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading Files...';
+
             const resumeFile = document.getElementById('resume-cv').files[0];
             const validIdFile = document.getElementById('valid-id').files[0];
             const certificatesFile = document.getElementById('certificates-file').files[0];
 
-            if (!resumeFile || !validIdFile) { 
-                throw new Error('Please select both a Resume and a Valid ID.'); 
-            }
-            
-            // Check consents
-            const consentBackground = document.getElementById('consent-background').checked;
-            const consentDrugTest = document.getElementById('consent-drug-test').checked;
-            const consentTruthfulness = document.getElementById('consent-truthfulness').checked;
-            if (!consentBackground || !consentDrugTest || !consentTruthfulness) { 
-                throw new Error('Please agree to all consent statements.'); 
+            if (!resumeFile || !validIdFile) {
+                throw new Error('Please make sure you have selected a Resume/CV and a Valid ID.');
             }
 
-            // --- A. Upload Resume ---
             const timestamp = Date.now();
+            
+            // Upload Resume
             const resumePath = `resumes/${timestamp}-${resumeFile.name}`;
-            const { error: rErr } = await supabaseClient.storage.from('applicant-files').upload(resumePath, resumeFile);
-            if (rErr) throw new Error('Resume upload failed: ' + rErr.message);
+            await supabaseClient.storage.from('applicant-files').upload(resumePath, resumeFile);
             applicationData.resume_url = supabaseClient.storage.from('applicant-files').getPublicUrl(resumePath).data.publicUrl;
 
-            // --- B. Upload Valid ID ---
+            // Upload Valid ID
             const idPath = `ids/${timestamp}-${validIdFile.name}`;
-            const { error: iErr } = await supabaseClient.storage.from('applicant-files').upload(idPath, validIdFile);
-            if (iErr) throw new Error('ID upload failed: ' + iErr.message);
+            await supabaseClient.storage.from('applicant-files').upload(idPath, validIdFile);
             applicationData.valid_id_url = supabaseClient.storage.from('applicant-files').getPublicUrl(idPath).data.publicUrl;
             
-            // --- C. Upload Certificates (Optional) ---
+            // Upload Certs
             if (certificatesFile) {
                 const certsPath = `certs/${timestamp}-${certificatesFile.name}`;
-                const { error: cErr } = await supabaseClient.storage.from('applicant-files').upload(certsPath, certificatesFile);
-                if (cErr) throw new Error('Certificates upload failed: ' + cErr.message);
+                await supabaseClient.storage.from('applicant-files').upload(certsPath, certificatesFile);
                 applicationData.certificates_url = supabaseClient.storage.from('applicant-files').getPublicUrl(certsPath).data.publicUrl;
             }
 
-            // Save consents to object
+            // --- STEP 3: SAVE TO DATABASE ---
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finalizing...';
+            
             applicationData.consent_background = consentBackground;
             applicationData.consent_drug_test = consentDrugTest;
             applicationData.consent_truthfulness = consentTruthfulness;
+            applicationData.status = 'Pending'; // Ensure status is set
             
-            // --- D. Save to Database ---
             const { error: insertError } = await supabaseClient.from('applicants').insert([applicationData]);
             if (insertError) throw insertError;
-            
-            console.log('Database saved.');
 
-            // --- E. Trigger Edge Function Email ---
+            // --- STEP 4: SEND EMAIL ---
             try {
-                const { error: funcError } = await supabaseClient.functions.invoke('send-email', {
+                await supabaseClient.functions.invoke('send-email', {
                     body: {
                         applicant_name: `${applicationData.first_name} ${applicationData.last_name}`,
                         applicant_email: applicationData.email,
                         position: applicationData.desired_position,
                     },
                 });
-                if (funcError) console.error('Email Function Error:', funcError);
-            } catch (emailErr) {
-                console.error('Email call failed:', emailErr);
-            }
+            } catch (e) { console.error('Email notify failed:', e); }
             
-            alert('Application submitted successfully!');
+            alert('Application submitted successfully! Thank you.');
             localStorage.removeItem('applicationData');
             window.location.href = 'index.html';
 
         } catch (error) {
             console.error("Submission Error:", error);
-            alert("Error: " + error.message);
+            alert(error.message);
             submitButton.disabled = false;
             submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
         }
