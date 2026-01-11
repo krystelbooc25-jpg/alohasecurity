@@ -15,7 +15,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #f0f2f5; display: flex; min-height: 100vh; color: #333; }
+        body { background-color: #f0f2f5; display: flex; min-height: 100vh; color: #333; overflow-x: hidden; }
 
         /* --- SIDEBAR --- */
         .sidebar {
@@ -27,9 +27,23 @@
             padding: 20px 0;
             position: fixed;
             height: 100vh;
-            z-index: 100;
+            z-index: 1100;
+            transition: transform 0.3s ease;
         }
+        
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1050;
+        }
+
         .sidebar-logo { text-align: center; font-size: 24px; font-weight: 800; margin-bottom: 40px; letter-spacing: 2px; }
+        
         .nav-item {
             padding: 15px 25px;
             color: rgba(255,255,255,0.8);
@@ -45,17 +59,28 @@
         .nav-item.active { background: #111; border-left: 5px solid white; color: white; }
 
         /* --- MAIN CONTENT --- */
-        .main-content { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; }
+        .main-content { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; transition: 0.3s; width: 100%; }
 
         .top-section {
             background: linear-gradient(180deg, #1a1a1a 0%, #333 100%);
             padding: 30px 40px 100px 40px;
             color: white;
         }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; gap: 20px; }
         
+        /* HAMBURGER MENU (Hidden on Desktop) */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
         /* SEARCH BAR */
-        .search-container { position: relative; width: 450px; }
+        .search-container { position: relative; flex: 1; max-width: 450px; }
         .search-container input {
             width: 100%;
             background: rgba(255,255,255,0.1);
@@ -67,8 +92,8 @@
         }
         .search-container i { position: absolute; left: 15px; top: 15px; color: rgba(255,255,255,0.5); }
 
-        /* METRIC CARDS (Now clickable tabs) */
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        /* METRIC CARDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
         .stat-card {
             background: var(--card-dark);
             padding: 20px;
@@ -76,6 +101,7 @@
             border-bottom: 4px solid transparent;
             cursor: pointer;
             transition: 0.3s;
+            text-align: center;
         }
         .stat-card:hover { transform: translateY(-5px); }
         .stat-card.active-tab { border-bottom: 4px solid var(--primary-red); background: #252525; }
@@ -88,11 +114,11 @@
             background: white;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
+            overflow-x: auto; /* Enable horizontal scroll for table on mobile */
         }
         .table-header-title { padding: 20px 25px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
 
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
         th { text-align: left; padding: 18px 25px; background: #fafafa; color: #999; font-size: 11px; text-transform: uppercase; }
         td { padding: 15px 25px; border-bottom: 1px solid #f1f1f1; font-size: 14px; }
 
@@ -103,23 +129,49 @@
         .rejected { background: #fff1f0; color: #f5222d; }
 
         /* ACTIONS */
-        .action-group { display: flex; gap: 5px; }
-        .btn-action { width: 30px; height: 30px; border: none; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; font-size: 12px; }
+        .action-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-action { width: 32px; height: 32px; border: none; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; font-size: 12px; }
         .btn-view { background: #f0f0f0; color: #555; }
         .btn-approve { background: #e6f7ff; color: #1890ff; }
         .btn-reject { background: #fff1f0; color: #f5222d; }
         .btn-delete { background: #eee; color: #999; }
-        .btn-action:hover { filter: brightness(0.9); }
+        .btn-action:hover { filter: brightness(0.9); transform: scale(1.1); }
 
         /* MODAL */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 350px; text-align: center; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 350px; text-align: center; }
         .btn-confirm { background: var(--primary-red); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.open { display: block; }
+            .main-content { margin-left: 0; }
+            .menu-toggle { display: block; }
+            .top-section { padding: 30px 20px 100px 20px; }
+            .table-container { margin: -60px 20px 40px 20px; }
+        }
+
+        @media (max-width: 768px) {
+            .header-bar { flex-direction: column; align-items: flex-start; }
+            .search-container { max-width: 100%; width: 100%; order: 3; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .admin-name-tag { display: none; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .value { font-size: 22px; }
+        }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">ALOHA</div>
         <a class="nav-item active"><i class="fas fa-th-large"></i> Dashboard</a>
         <a class="nav-item" href="index.html"><i class="fas fa-external-link-alt"></i> View Site</a>
@@ -132,12 +184,15 @@
     <main class="main-content">
         <div class="top-section">
             <div class="header-bar">
-                <h2>Admin Panel</h2>
+                <button class="menu-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2 style="white-space: nowrap;">Admin Panel</h2>
                 <div class="search-container">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search across all tabs..." oninput="applyFilters()">
+                    <input type="text" id="searchInput" placeholder="Search applicants..." oninput="applyFilters()">
                 </div>
-                <div style="font-weight: bold; font-size: 14px;">Administrator</div>
+                <div class="admin-name-tag" style="font-weight: bold; font-size: 14px;">Administrator</div>
             </div>
 
             <!-- TAB NAVIGATION -->
@@ -147,15 +202,15 @@
                     <div class="value" id="count-all">0</div>
                 </div>
                 <div class="stat-card" id="tab-pending" onclick="switchTab('Pending')">
-                    <h4>Pending Review</h4>
+                    <h4>Pending</h4>
                     <div class="value" id="count-pending" style="color: #f39c12;">0</div>
                 </div>
                 <div class="stat-card" id="tab-approved" onclick="switchTab('Approved')">
-                    <h4>Approved List</h4>
+                    <h4>Approved</h4>
                     <div class="value" id="count-approved" style="color: #2ecc71;">0</div>
                 </div>
                 <div class="stat-card" id="tab-rejected" onclick="switchTab('Rejected')">
-                    <h4>Rejected List</h4>
+                    <h4>Rejected</h4>
                     <div class="value" id="count-rejected" style="color: #e74c3c;">0</div>
                 </div>
             </div>
@@ -171,7 +226,7 @@
                     <tr>
                         <th>Applicant Name</th>
                         <th>Position</th>
-                        <th>Submission Date</th>
+                        <th>Date</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -199,7 +254,13 @@
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         let masterData = [];
-        let currentTab = 'All'; // Can be 'All', 'Pending', 'Approved', 'Rejected'
+        let currentTab = 'All';
+
+        // Sidebar Toggle Logic for Mobile
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('open');
+        }
 
         async function init() {
             const { data: { session } } = await _supabase.auth.getSession();
@@ -224,31 +285,21 @@
 
         function switchTab(tabName) {
             currentTab = tabName;
-            
-            // UI Updates
             document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active-tab'));
             document.getElementById(`tab-${tabName.toLowerCase()}`).classList.add('active-tab');
             document.getElementById('current-view-title').innerText = `${tabName} Applications`;
-            
             applyFilters();
         }
 
         function applyFilters() {
             const term = document.getElementById('searchInput').value.toLowerCase();
-            
             const filtered = masterData.filter(app => {
                 const status = app.status || 'Pending';
-                
-                // Filter by Tab
                 const matchesTab = (currentTab === 'All') || (status === currentTab);
-                
-                // Filter by Search
                 const matchesSearch = `${app.first_name} ${app.last_name}`.toLowerCase().includes(term) ||
                                      (app.desired_position || '').toLowerCase().includes(term);
-                
                 return matchesTab && matchesSearch;
             });
-
             render(filtered);
         }
 

@@ -1,50 +1,61 @@
-/* General Body Styles */
+/* --- UNIVERSAL RESET --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
+    background-color: #f8f9fa;
     color: #333;
-    overflow: hidden; /* Prevents scrollbars from the full-height layout */
+    min-height: 100vh;
+    /* Inalis ang overflow: hidden para makapag-scroll sa maliliit na phone */
+    overflow-x: hidden; 
 }
 
 .login-container {
     display: flex;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    min-height: 100vh;
+    flex-direction: row; /* Side-by-side sa Desktop */
 }
 
-/* Panel Styling */
+/* --- PANEL STYLING --- */
 .login-panel {
     flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 40px;
+    padding: 40px 20px;
 }
 
 /* Left Branding Panel */
 .branding-panel {
-    background-color: #002b5c; /* Main brand color */
+    background-color: #002b5c;
     color: #fff;
     text-align: center;
 }
 
 .branding-content {
     max-width: 400px;
+    width: 100%;
 }
 
 .branding-panel .logo {
     width: 80px;
+    height: auto;
     margin-bottom: 20px;
 }
 
 .branding-panel h1 {
-    font-size: 36px;
+    font-size: clamp(1.8rem, 4vw, 2.5rem); /* Dynamic size */
     margin-bottom: 15px;
     font-weight: 600;
 }
 
 .branding-panel p {
-    font-size: 16px;
+    font-size: 1rem;
     line-height: 1.6;
     opacity: 0.8;
     margin-bottom: 30px;
@@ -57,9 +68,10 @@ body {
     align-items: center;
     gap: 8px;
     border: 1px solid rgba(255, 255, 255, 0.5);
-    padding: 10px 20px;
+    padding: 10px 25px;
     border-radius: 50px;
-    transition: background-color 0.3s, border-color 0.3s;
+    transition: 0.3s;
+    font-size: 0.9rem;
 }
 
 .back-to-site-link:hover {
@@ -78,7 +90,7 @@ body {
 }
 
 .form-panel h2 {
-    font-size: 32px;
+    font-size: 2rem;
     color: #002b5c;
     margin-bottom: 10px;
     font-weight: 700;
@@ -86,10 +98,10 @@ body {
 
 .form-panel p {
     color: #666;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
 
-/* Input Fields with Icons */
+/* --- INPUT GROUPS --- */
 .input-group {
     position: relative;
     margin-bottom: 20px;
@@ -105,12 +117,11 @@ body {
 
 .input-group input {
     width: 100%;
-    padding: 15px 15px 15px 45px; /* Make space for the icon */
+    padding: 15px 15px 15px 45px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    font-size: 16px;
-    box-sizing: border-box; /* Important for padding and width calculation */
-    transition: border-color 0.3s, box-shadow 0.3s;
+    font-size: 16px; /* 16px prevents iOS auto-zoom */
+    transition: 0.3s;
 }
 
 .input-group input:focus {
@@ -119,82 +130,86 @@ body {
     box-shadow: 0 0 0 3px rgba(0, 43, 92, 0.15);
 }
 
-/* Form Options */
-.options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    font-size: 14px;
-}
-
-.remember-me {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.forgot-password {
-    color: #002b5c;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.forgot-password:hover {
-    text-decoration: underline;
-}
-
-/* Login Button */
-/* Login Button */
+/* --- BUTTONS --- */
 .btn-login {
-    display: block; /* ADD THIS: Makes the link fill the width */
-    box-sizing: border-box; /* ADD THIS: Ensures padding is inside the width */
+    display: block;
     width: 100%;
-    padding: 15px;
+    padding: 16px;
     border: none;
     border-radius: 8px;
     background-color: #002b5c;
     color: #fff;
-    font-size: 18px;
+    font-size: 1.1rem;
     font-weight: 600;
-    text-align: center; /* ADD THIS: Centers the text inside */
-    text-decoration: none; /* ADD THIS: Removes the underline */
+    text-align: center;
+    text-decoration: none;
     cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
+    transition: 0.3s;
 }
 
 .btn-login:hover {
-    background-color: #001f44; /* A darker shade for hover */
+    background-color: #001f44;
 }
 
 .btn-login:active {
     transform: scale(0.98);
 }
 
-/* Form Footer */
 .form-footer {
     text-align: center;
-    margin-top: 40px;
-}
-
-.form-footer p {
+    margin-top: 30px;
     color: #999;
-    font-size: 12px;
+    font-size: 0.8rem;
 }
 
-/* Responsive Design for smaller screens */
+/* --- RESPONSIVE MEDIA QUERIES --- */
+
+/* TABLET VIEW */
+@media (max-width: 1024px) {
+    .login-panel { padding: 30px; }
+    .branding-panel h1 { font-size: 2rem; }
+}
+
+/* MOBILE VIEW (Phones) */
 @media (max-width: 768px) {
     .login-container {
-        flex-direction: column;
-        height: auto;
-        overflow: auto;
+        flex-direction: column; /* Stack vertically */
     }
 
     .branding-panel {
-        display: none; /* Hide the branding panel on mobile for a simpler view */
+        padding: 60px 20px;
+        min-height: auto; /* Hayaan siyang mag-adjust sa content */
+    }
+
+    .branding-content {
+        max-width: 100%;
     }
 
     .form-panel {
-        min-height: 100vh;
+        padding: 40px 25px;
+        background-color: #ffffff; /* Mas malinis tignan sa mobile */
+    }
+
+    .form-content {
+        max-width: 100%;
+    }
+}
+
+/* SMALL PHONES (iPhone SE, etc) */
+@media (max-width: 480px) {
+    .branding-panel p {
+        display: none; /* Itago ang description para mas mabilis makita ang form */
+    }
+    
+    .branding-panel {
+        padding: 40px 20px;
+    }
+
+    .branding-panel h1 {
+        font-size: 1.5rem;
+    }
+
+    .form-panel h2 {
+        font-size: 1.6rem;
     }
 }
