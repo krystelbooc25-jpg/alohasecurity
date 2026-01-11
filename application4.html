@@ -8,84 +8,58 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* --- GLOBAL RESPONSIVE FIXES --- */
+        /* --- GLOBAL RESPONSIVE & THEME FIXES --- */
+        :root {
+            --primary-red: #D2042D;
+            --container-bg: #ffffff;
+            --text-main: #1a1a1a;
+            --border-color: #d1d9e0;
+        }
+
+        body.dark-mode {
+            --container-bg: #1a1a1a;
+            --text-main: #f0f0f0;
+            --border-color: #333;
+        }
+
         * { box-sizing: border-box; }
         
         body {
             padding: 20px 10px;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Better for long forms on mobile */
+            align-items: flex-start;
             min-height: 100vh;
+            background-color: #f0f4f8;
+            color: var(--text-main);
         }
 
         .application-container {
             width: 100%;
             max-width: 1000px;
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--primary-red);
         }
 
-        /* Responsive Summary Grid */
         .summary-grid {
             display: grid;
             grid-template-columns: auto 1fr auto 1fr;
             gap: 10px 20px;
         }
 
-        .summary-grid p {
-            word-break: break-word; /* Prevents long emails from breaking layout */
-            margin: 0;
-        }
+        .summary-grid p { word-break: break-word; margin: 0; }
 
-        /* --- MOBILE BREAKPOINT (Tablets and Phones) --- */
         @media (max-width: 768px) {
-            .app-header {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-
-            .progress-bar {
-                padding: 20px 10px;
-            }
-
-            .step-label {
-                display: none; /* Hide text labels on mobile to save space */
-            }
-
-            .connector {
-                margin: 0 5px; /* Shrink the lines between circles */
-            }
-
-            .form-container {
-                padding: 20px 15px;
-            }
-
-            .file-upload-container {
-                flex-direction: column; /* Stack upload boxes vertically */
-                gap: 15px;
-            }
-
-            .summary-grid {
-                grid-template-columns: 1fr; /* Single column summary */
-                gap: 5px;
-            }
-
-            .summary-grid p strong {
-                display: block;
-                margin-top: 10px;
-                color: #002b5c;
-            }
-
-            .form-footer {
-                flex-direction: column-reverse; /* Stack buttons: Submit on top */
-                gap: 12px;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-                padding: 15px;
-            }
+            .app-header { flex-direction: column; text-align: center; gap: 15px; }
+            .progress-bar { padding: 20px 10px; }
+            .step-label { display: none; }
+            .connector { margin: 0 5px; }
+            .file-upload-container { flex-direction: column; gap: 15px; }
+            .summary-grid { grid-template-columns: 1fr; gap: 5px; }
+            .form-footer { flex-direction: column-reverse; gap: 12px; }
+            .btn { width: 100%; justify-content: center; padding: 15px; }
         }
     </style>
 </head>
@@ -96,7 +70,7 @@
             <div class="logo">
                 <img src="Resources/logo.jpg" alt="Logo" style="height: 50px;">
                 <div class="logo-text">
-                    <h2>Job Application</h2>
+                    <h2 style="color: var(--primary-red);">Job Application</h2>
                     <p>Aloha Security Agency</p>
                 </div>
             </div>
@@ -104,27 +78,27 @@
         </header>
 
         <nav class="progress-bar">
-            <div class="step complete"><div class="step-number"><i class="fas fa-check"></i></div><div class="step-label">Personal Info</div></div>
+            <div class="step complete"><div class="step-number"><i class="fas fa-check"></i></div></div>
             <div class="connector active"></div>
-            <div class="step complete"><div class="step-number"><i class="fas fa-check"></i></div><div class="step-label">Position Details</div></div>
+            <div class="step complete"><div class="step-number"><i class="fas fa-check"></i></div></div>
             <div class="connector active"></div>
-            <div class="step complete"><div class="step-number"><i class="fas fa-check"></i></div><div class="step-label">Experience</div></div>
+            <div class="step complete"><div class="step-number"><i class="fas fa-check"></i></div></div>
             <div class="connector active"></div>
-            <div class="step active"><div class="step-number">4</div><div class="step-label">Review & Submit</div></div>
+            <div class="step active"><div class="step-number">4</div></div>
         </nav>
 
         <main class="form-container">
             <div class="form-header">
-                <div class="form-icon"><i class="fas fa-file-signature"></i></div>
-                <div class="form-title">
+                <div class="form-icon" style="background: var(--primary-red); color: white; padding: 15px; border-radius: 50%;"><i class="fas fa-file-signature"></i></div>
+                <div class="form-title" style="margin-left: 15px;">
                     <h3>Review & Submit</h3>
-                    <p>Please review your information and complete your application</p>
+                    <p>Please review your information carefully.</p>
                 </div>
             </div>
 
             <form class="application-form" id="final-form" novalidate>
-                <div class="application-summary">
-                    <h4>Application Summary</h4>
+                <div class="application-summary" style="background: rgba(210, 4, 45, 0.05); padding: 20px; border-radius: 8px; border: 1px solid var(--primary-red);">
+                    <h4 style="color: var(--primary-red); margin-bottom: 15px;">Application Summary</h4>
                     <div class="summary-grid">
                         <p><strong>Name:</strong></p><p id="summary-name">Loading...</p>
                         <p><strong>Position:</strong></p><p id="summary-position">Loading...</p>
@@ -134,53 +108,29 @@
                 </div>
 
                 <div class="form-group full-width" style="margin-top: 20px;">
-                    <label>Required Documents</label>
-                    <div class="file-upload-container">
-                        <div class="file-upload-box">
-                            <i class="fas fa-upload"></i>
-                            <span id="resume-file-name">Resume/CV *</span>
-                            <small>PDF, DOC (Max 5MB)</small>
-                            <input type="file" id="resume-cv" name="resume-cv">
+                    <label>Required Documents (Select files again to confirm)</label>
+                    <div class="file-upload-container" style="display: flex; gap: 15px; margin-top: 10px;">
+                        <div class="file-upload-box" style="flex:1; border:2px dashed var(--border-color); padding:20px; text-align:center; border-radius:8px;">
+                            <i class="fas fa-upload"></i> <span id="resume-file-name">Resume/CV *</span>
+                            <input type="file" id="resume-cv" required style="display:none;">
+                            <button type="button" onclick="document.getElementById('resume-cv').click()" style="display:block; margin: 10px auto; padding: 5px 10px; cursor:pointer;">Choose File</button>
                         </div>
-                        <div class="file-upload-box">
-                            <i class="fas fa-upload"></i>
-                            <span id="certificates-file-name">Certificates</span>
-                            <small>PDF, JPG (Max 5MB)</small>
-                            <input type="file" id="certificates-file" name="certificates">
-                        </div>
-                        <div class="file-upload-box">
-                            <i class="fas fa-upload"></i>
-                            <span id="valid-id-file-name">Valid ID *</span>
-                            <small>PDF, JPG (Max 5MB)</small>
-                            <input type="file" id="valid-id" name="valid-id">
+                        <div class="file-upload-box" style="flex:1; border:2px dashed var(--border-color); padding:20px; text-align:center; border-radius:8px;">
+                            <i class="fas fa-upload"></i> <span id="id-file-name">Valid ID *</span>
+                            <input type="file" id="valid-id" required style="display:none;">
+                            <button type="button" onclick="document.getElementById('valid-id').click()" style="display:block; margin: 10px auto; padding: 5px 10px; cursor:pointer;">Choose File</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="consent-group">
-                    <input type="checkbox" id="consent-background" name="consent-background">
-                    <label for="consent-background">I consent to a background check.</label>
-                </div>
-                <div class="consent-group">
-                    <input type="checkbox" id="consent-drug-test" name="consent-drug-test">
-                    <label for="consent-drug-test">I consent to pre-employment drug testing.</label>
-                </div>
-                <div class="consent-group">
-                    <input type="checkbox" id="consent-truthfulness" name="consent-truthfulness">
-                    <label for="consent-truthfulness">I certify that the information provided is true and complete.</label>
+                <div class="consent-group" style="margin-top: 20px;">
+                    <label><input type="checkbox" id="consent-truth" required> I certify that all information is true.</label>
                 </div>
             </form>
 
-            <div id="offline-overlay">
-                <div>
-                    <h1>You are Offline</h1>
-                    <p>Please check your internet connection.</p>
-                </div>
-            </div>
-
-            <footer class="form-footer">
-                <a href="application3.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Previous</a>
-                <button type="submit" form="final-form" id="submit-button" class="btn btn-success"><i class="fas fa-paper-plane"></i> Submit Application</button>
+            <footer class="form-footer" style="display: flex; justify-content: space-between; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                <a href="application3.html" class="btn btn-secondary" style="text-decoration:none; padding: 12px 25px; border: 1px solid #ddd; border-radius: 8px;">Previous</a>
+                <button type="submit" form="final-form" id="submit-button" class="btn btn-success" style="background: var(--primary-red); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;">Submit Application</button>
             </footer>
         </main>
     </div>
@@ -189,102 +139,98 @@
     // --- 1. INITIALIZE SUPABASE ---
     const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
-    const { createClient } = supabase;
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+    // --- 2. THEME & DATA LOAD ---
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
     const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
+    
     document.getElementById('summary-name').textContent = `${applicationData.first_name || ''} ${applicationData.last_name || ''}`;
     document.getElementById('summary-email').textContent = applicationData.email || 'N/A';
     document.getElementById('summary-position').textContent = applicationData.desired_position || 'N/A';
     document.getElementById('summary-availability').textContent = applicationData.availability || 'N/A';
 
-    // File name displays
-    document.getElementById('resume-cv').addEventListener('change', (e) => { document.getElementById('resume-file-name').textContent = e.target.files[0]?.name || 'Resume/CV *'; });
-    document.getElementById('certificates-file').addEventListener('change', (e) => { document.getElementById('certificates-file-name').textContent = e.target.files[0]?.name || 'Certificates'; });
-    document.getElementById('valid-id').addEventListener('change', (e) => { document.getElementById('valid-id-file-name').textContent = e.target.files[0]?.name || 'Valid ID *'; });
+    // File label updates
+    document.getElementById('resume-cv').onchange = (e) => document.getElementById('resume-file-name').innerText = e.target.files[0]?.name || "Resume/CV *";
+    document.getElementById('valid-id').onchange = (e) => document.getElementById('id-file-name').innerText = e.target.files[0]?.name || "Valid ID *";
 
-    document.getElementById('final-form').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const submitButton = document.getElementById('submit-button');
-        
-        const consentBackground = document.getElementById('consent-background').checked;
-        const consentDrugTest = document.getElementById('consent-drug-test').checked;
-        const consentTruthfulness = document.getElementById('consent-truthfulness').checked;
-        
-        if (!consentBackground || !consentDrugTest || !consentTruthfulness) { 
-            alert('Please agree to all consent statements.');
-            return;
-        }
+    // --- 3. SUBMIT LOGIC ---
+    document.getElementById('final-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submit-button');
+        const truthCheck = document.getElementById('consent-truth').checked;
 
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        if (!truthCheck) return alert("Please certify the truthfulness of your data.");
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking Status...';
 
         try {
-            const email = applicationData.email;
-
-            // 1. Check Duplicates & 3-Month Rule
-            const { data: existingApps, error: fetchError } = await supabaseClient
+            // STEP 1: DUPLICATE CHECK & 3-MONTH RULE
+            const { data: existing, error: fetchErr } = await _supabase
                 .from('applicants')
                 .select('status, created_at')
-                .eq('email', email)
+                .eq('email', applicationData.email)
                 .order('created_at', { ascending: false })
                 .limit(1);
 
-            if (existingApps && existingApps.length > 0) {
-                const latest = existingApps[0];
+            if (fetchErr) throw fetchErr;
+
+            if (existing && existing.length > 0) {
+                const latest = existing[0];
                 if (latest.status !== 'Rejected') {
-                    throw new Error(`You have an active application (${latest.status}).`);
+                    throw new Error(`You have an active application (${latest.status}). Please wait for HR to contact you.`);
                 }
-                const diff = Math.abs(new Date() - new Date(latest.created_at));
-                if (diff / (1000 * 60 * 60 * 24 * 30.44) < 3) {
-                    throw new Error("Rejected applicants must wait 3 months before applying again.");
+                const diffTime = Math.abs(new Date() - new Date(latest.created_at));
+                const diffMonths = diffTime / (1000 * 60 * 60 * 24 * 30.44);
+                if (diffMonths < 3) {
+                    throw new Error("Rejected applicants must wait 3 months before re-applying.");
                 }
             }
 
-            // 2. Upload Files
+            // STEP 2: UPLOAD FILES
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading Files...';
             const resumeFile = document.getElementById('resume-cv').files[0];
-            const validIdFile = document.getElementById('valid-id').files[0];
-            if (!resumeFile || !validIdFile) throw new Error('Missing files!');
+            const idFile = document.getElementById('valid-id').files[0];
+            if (!resumeFile || !idFile) throw new Error("Please re-select your files to confirm upload.");
 
             const ts = Date.now();
-            await supabaseClient.storage.from('applicant-files').upload(`resumes/${ts}-${resumeFile.name}`, resumeFile);
-            applicationData.resume_url = supabaseClient.storage.from('applicant-files').getPublicUrl(`resumes/${ts}-${resumeFile.name}`).data.publicUrl;
+            // Resume
+            const rPath = `resumes/${ts}-${resumeFile.name}`;
+            await _supabase.storage.from('applicant-files').upload(rPath, resumeFile);
+            applicationData.resume_url = _supabase.storage.from('applicant-files').getPublicUrl(rPath).data.publicUrl;
+            // ID
+            const iPath = `ids/${ts}-${idFile.name}`;
+            await _supabase.storage.from('applicant-files').upload(iPath, idFile);
+            applicationData.valid_id_url = _supabase.storage.from('applicant-files').getPublicUrl(iPath).data.publicUrl;
 
-            await supabaseClient.storage.from('applicant-files').upload(`ids/${ts}-${validIdFile.name}`, validIdFile);
-            applicationData.valid_id_url = supabaseClient.storage.from('applicant-files').getPublicUrl(`ids/${ts}-${validIdFile.name}`).data.publicUrl;
-
-            // 3. Save Data
+            // STEP 3: SAVE TO DATABASE
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finalizing...';
             applicationData.status = 'Pending';
-            const { error: insErr } = await supabaseClient.from('applicants').insert([applicationData]);
+            const { error: insErr } = await _supabase.from('applicants').insert([applicationData]);
             if (insErr) throw insErr;
 
-            // 4. Email Notification
+            // STEP 4: TRIGGER EMAIL
             try {
-                await supabaseClient.functions.invoke('send-email', {
-                    body: {
-                        applicant_name: `${applicationData.first_name} ${applicationData.last_name}`,
-                        applicant_email: applicationData.email,
-                        position: applicationData.desired_position
-                    }
+                await _supabase.functions.invoke('send-email', { 
+                    body: { 
+                        applicant_name: applicationData.first_name, 
+                        applicant_email: applicationData.email, 
+                        position: applicationData.desired_position 
+                    } 
                 });
-            } catch (e) {}
+            } catch (mailErr) { console.error("Email failed but DB saved:", mailErr); }
 
-            alert('Submitted Successfully!');
+            alert("Application Submitted Successfully!");
             localStorage.removeItem('applicationData');
             window.location.href = 'index.html';
 
         } catch (error) {
             alert(error.message);
-            submitButton.disabled = false;
-            submitButton.innerHTML = 'Submit Application';
+            btn.disabled = false;
+            btn.innerHTML = 'Submit Application';
         }
-    });
-
-    const offlineOverlay = document.getElementById('offline-overlay');
-    function updateOnlineStatus() { offlineOverlay.style.display = navigator.onLine ? 'none' : 'flex'; }
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    updateOnlineStatus();
+    };
 </script>
 </body>
 </html>
