@@ -9,13 +9,13 @@
     <style>
         :root {
             --primary-red: #D2042D;
-            --dark-bg: #1a1a1d;
+            --dark-bg: #111111;
             --sidebar-width: 240px;
-            --light-bg: #f4f7f9;
+            --card-dark: #1e1e1e;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--light-bg); display: flex; min-height: 100vh; }
+        body { background-color: #f0f2f5; display: flex; min-height: 100vh; color: #333; }
 
         /* --- SIDEBAR --- */
         .sidebar {
@@ -28,8 +28,9 @@
             position: fixed;
             height: 100vh;
             z-index: 100;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
         }
-        .sidebar-logo { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 40px; }
+        .sidebar-logo { text-align: center; font-size: 24px; font-weight: 800; margin-bottom: 40px; letter-spacing: 2px; }
         .nav-item {
             padding: 15px 25px;
             color: rgba(255,255,255,0.8);
@@ -39,186 +40,157 @@
             gap: 15px;
             transition: 0.3s;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
         }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; border-left: 4px solid white; }
-        .nav-item i { width: 20px; }
+        .nav-item:hover { background: rgba(0,0,0,0.1); color: white; }
+        .nav-item.active { background: #111; border-left: 5px solid white; color: white; }
 
         /* --- MAIN CONTENT --- */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
+        .main-content { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; }
 
-        /* Top Header Area (Dark) */
         .top-section {
-            background: linear-gradient(135deg, #2c2c2e 0%, #1a1a1d 100%);
+            background: linear-gradient(180deg, #1a1a1a 0%, #333 100%);
             padding: 30px 40px 100px 40px;
             color: white;
         }
-        .header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-        .search-container {
-            position: relative;
-            width: 400px;
-        }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        
+        /* SEARCH BAR */
+        .search-container { position: relative; width: 450px; }
         .search-container input {
             width: 100%;
             background: rgba(255,255,255,0.1);
-            border: none;
-            padding: 10px 15px 10px 40px;
-            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px 15px 12px 45px;
+            border-radius: 10px;
             color: white;
             outline: none;
+            transition: 0.3s;
         }
-        .search-container i { position: absolute; left: 15px; top: 12px; color: rgba(255,255,255,0.5); }
+        .search-container input:focus { background: rgba(255,255,255,0.2); border-color: var(--primary-red); }
+        .search-container i { position: absolute; left: 15px; top: 15px; color: rgba(255,255,255,0.5); }
 
-        .user-info { display: flex; align-items: center; gap: 15px; }
-        .user-info img { width: 35px; height: 35px; border-radius: 50%; background: #eee; }
-
-        /* Metric Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
+        /* METRIC CARDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .stat-card {
-            background: rgba(255,255,255,0.05);
-            padding: 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--card-dark);
+            padding: 25px;
+            border-radius: 12px;
+            border-bottom: 4px solid var(--primary-red);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .stat-card.featured { background: rgba(255,255,255,0.1); transform: scale(1.05); }
-        .stat-card h4 { font-size: 12px; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 10px; }
-        .stat-card .value { font-size: 28px; font-weight: bold; }
+        .stat-card h4 { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
+        .stat-card .value { font-size: 32px; font-weight: bold; color: white; }
 
-        /* Table Area (White) */
+        /* TABLE AREA */
         .table-container {
             margin: -60px 40px 40px 40px;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-        .table-header-title { padding: 20px 25px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .table-header-title { padding: 20px 25px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
 
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px 25px; background: #f8f9fa; color: #888; font-size: 12px; text-transform: uppercase; }
-        td { padding: 15px 25px; border-bottom: 1px solid #eee; font-size: 14px; }
-        tr:hover { background: #f9fbff; }
+        th { text-align: left; padding: 18px 25px; background: #fafafa; color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 15px 25px; border-bottom: 1px solid #f1f1f1; font-size: 14px; }
+        tr:hover { background: #fdfdfd; }
 
-        .status-badge {
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: bold;
-        }
+        /* STATUS BADGES */
+        .badge { padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .pending { background: #fff4e5; color: #d48806; }
         .approved { background: #e6f7ff; color: #1890ff; }
+        .reviewed { background: #f6ffed; color: #52c41a; }
+        .rejected { background: #fff1f0; color: #f5222d; }
 
-        /* MODAL */
+        .btn-view { background: #f0f0f0; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; color: #555; transition: 0.2s; }
+        .btn-view:hover { background: var(--primary-red); color: white; }
+
+        /* CHANGE PASSWORD MODAL */
         .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0; top: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            justify-content: center; align-items: center;
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); justify-content: center; align-items: center;
         }
-        .modal-content {
-            background: white; padding: 30px; border-radius: 15px; width: 400px;
-        }
-        .modal-content h3 { margin-bottom: 20px; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 350px; text-align: center; }
+        .modal-content h3 { margin-bottom: 20px; color: #111; }
         .modal-content input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
-        .btn-red { background: var(--primary-red); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; }
-
-        .actions-btn { background: #f0f0f0; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .btn-confirm { background: var(--primary-red); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-logo">ALOHA</div>
-        <a class="nav-item active"><i class="fas fa-home"></i> Home</a>
-        <a class="nav-item" href="index.html"><i class="fas fa-globe"></i> Main Site</a>
-        <a class="nav-item" onclick="openPasswordModal()"><i class="fas fa-key"></i> Change Password</a>
+        <a class="nav-item active"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a class="nav-item" href="index.html"><i class="fas fa-external-link-alt"></i> View Site</a>
+        <a class="nav-item" onclick="toggleModal(true)"><i class="fas fa-lock"></i> Password</a>
         <div style="margin-top: auto;">
-            <a class="nav-item" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <a class="nav-item" onclick="handleLogout()" style="color: #ff9999;"><i class="fas fa-power-off"></i> Sign Out</a>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main class="main-content">
         <div class="top-section">
             <div class="header-bar">
-                <h2>Dashboard</h2>
+                <h2>Overview</h2>
                 <div class="search-container">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search applicants by name or position..." onkeyup="filterTable()">
+                    <input type="text" id="searchInput" placeholder="Search by name, email or position..." oninput="filterTable()">
                 </div>
-                <div class="user-info">
-                    <span>Admin</span>
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=D2042D&color=fff" alt="User">
-                </div>
+                <div style="font-weight: bold; font-size: 14px;">Administrator</div>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <h4>Total Tickets</h4>
+                    <h4>Total Applicants</h4>
                     <div class="value" id="total-count">0</div>
                 </div>
-                <div class="stat-card featured">
-                    <h4>Pending Apps</h4>
-                    <div class="value" id="pending-count">0</div>
-                </div>
                 <div class="stat-card">
-                    <h4>Reviewed</h4>
-                    <div class="value" id="reviewed-count">0</div>
+                    <h4>Pending Review</h4>
+                    <div class="value" id="pending-count" style="color: #f39c12;">0</div>
                 </div>
                 <div class="stat-card">
                     <h4>Approved</h4>
-                    <div class="value" id="approved-count">0</div>
+                    <div class="value" id="approved-count" style="color: #2ecc71;">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Rejected</h4>
+                    <div class="value" id="rejected-count" style="color: #e74c3c;">0</div>
                 </div>
             </div>
         </div>
 
         <div class="table-container">
             <div class="table-header-title">
-                <span>Últimos pedidos (Recent Applications)</span>
-                <span id="result-count" style="color: #888; font-weight: normal;">0 results</span>
+                <span>Application Log</span>
+                <span id="result-count" style="font-size: 12px; color: #999; font-weight: normal;">Loading records...</span>
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th>Applicant</th>
-                        <th>Position</th>
-                        <th>Date Submitted</th>
-                        <th>Email</th>
+                        <th>Applicant Name</th>
+                        <th>Target Position</th>
+                        <th>Submission Date</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="applicant-table-body">
-                    <!-- Rows will load here -->
+                <tbody id="table-body">
+                    <!-- Rows injected here -->
                 </tbody>
             </table>
         </div>
     </main>
 
-    <!-- CHANGE PASSWORD MODAL -->
     <div id="passwordModal" class="modal">
         <div class="modal-content">
-            <h3>Change Password</h3>
-            <input type="password" id="newPassword" placeholder="Enter new password">
-            <button class="btn-red" onclick="updatePassword()">Update Password</button>
-            <button style="margin-top: 10px; background: none; border: none; cursor: pointer; color: #888;" onclick="closePasswordModal()">Cancel</button>
+            <h3>Update Password</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Enter a new secure password below.</p>
+            <input type="password" id="newPassword" placeholder="New Password">
+            <button class="btn-confirm" onclick="updatePassword()">Update Now</button>
+            <p onclick="toggleModal(false)" style="margin-top: 15px; cursor: pointer; font-size: 13px; color: #999;">Cancel</p>
         </div>
     </div>
 
@@ -227,75 +199,82 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        let allApplicants = [];
+        let masterData = [];
 
-        async function checkSession() {
-            const { data } = await _supabase.auth.getSession();
-            if (!data.session) window.location.href = 'AdminLogin.html';
-            else loadData();
+        async function init() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) return window.location.href = 'AdminLogin.html';
+            fetchApplicants();
         }
 
-        async function loadData() {
+        async function fetchApplicants() {
             const { data, error } = await _supabase.from('applicants').select('*').order('created_at', { ascending: false });
-            if (error) return;
-            allApplicants = data;
-            renderTable(allApplicants);
+            if (error) return console.error(error);
+            masterData = data;
+            render(masterData);
             updateStats(data);
         }
 
         function updateStats(data) {
             document.getElementById('total-count').innerText = data.length;
             document.getElementById('pending-count').innerText = data.filter(a => a.status === 'Pending').length;
-            document.getElementById('reviewed-count').innerText = data.filter(a => a.status === 'Reviewed').length;
             document.getElementById('approved-count').innerText = data.filter(a => a.status === 'Approved').length;
+            document.getElementById('rejected-count').innerText = data.filter(a => a.status === 'Rejected').length;
         }
 
-        function renderTable(applicants) {
-            const body = document.getElementById('applicant-table-body');
+        function render(list) {
+            const body = document.getElementById('table-body');
             body.innerHTML = '';
-            document.getElementById('result-count').innerText = `${applicants.length} results`;
+            document.getElementById('result-count').innerText = `Showing ${list.length} applications`;
 
-            applicants.forEach(app => {
-                const row = `
-                    <tr>
-                        <td style="font-weight: bold;">${app.first_name} ${app.last_name}</td>
-                        <td>${app.desired_position}</td>
-                        <td>${new Date(app.created_at).toLocaleDateString()}</td>
-                        <td style="color: #1890ff;">${app.email}</td>
-                        <td><span class="status-badge ${app.status.toLowerCase()}">${app.status}</span></td>
-                        <td>
-                            <button class="actions-btn" onclick="window.location.href='view-applicant.html?id=${app.id}'"><i class="fas fa-eye"></i></button>
-                        </td>
-                    </tr>
+            list.forEach(app => {
+                // Safeguard against null values for the table display
+                const fullName = `${app.first_name || ''} ${app.last_name || ''}`;
+                const position = app.desired_position || 'Not Specified';
+                const status = app.status || 'Pending';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${fullName}</td>
+                    <td><span style="color: #666;">${position}</span></td>
+                    <td style="color: #999; font-size: 13px;">${new Date(app.created_at).toLocaleDateString()}</td>
+                    <td><span class="badge ${status.toLowerCase()}">${status}</span></td>
+                    <td>
+                        <button class="btn-view" onclick="window.location.href='view-applicant.html?id=${app.id}'">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </td>
                 `;
-                body.innerHTML += row;
+                body.appendChild(tr);
             });
         }
 
-        // --- SEARCH FILTER ---
+        // --- FIXED SEARCH FUNCTION ---
         function filterTable() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allApplicants.filter(app => 
-                `${app.first_name} ${app.last_name}`.toLowerCase().includes(query) ||
-                app.desired_position.toLowerCase().includes(query)
-            );
-            renderTable(filtered);
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filtered = masterData.filter(app => {
+                // We use || '' to ensure we are searching against a string, even if DB value is null
+                const nameMatch = `${app.first_name || ''} ${app.last_name || ''}`.toLowerCase().includes(term);
+                const posMatch = (app.desired_position || '').toLowerCase().includes(term);
+                const emailMatch = (app.email || '').toLowerCase().includes(term);
+                
+                return nameMatch || posMatch || emailMatch;
+            });
+
+            render(filtered);
         }
 
-        // --- CHANGE PASSWORD LOGIC ---
-        function openPasswordModal() { document.getElementById('passwordModal').style.display = 'flex'; }
-        function closePasswordModal() { document.getElementById('passwordModal').style.display = 'none'; }
+        function toggleModal(show) {
+            document.getElementById('passwordModal').style.display = show ? 'flex' : 'none';
+        }
 
         async function updatePassword() {
-            const newPwd = document.getElementById('newPassword').value;
-            if(newPwd.length < 6) return alert("Password must be at least 6 characters");
-            
-            const { error } = await _supabase.auth.updateUser({ password: newPwd });
+            const pwd = document.getElementById('newPassword').value;
+            if (pwd.length < 6) return alert("Password too short!");
+            const { error } = await _supabase.auth.updateUser({ password: pwd });
             if (error) alert(error.message);
-            else {
-                alert("Password updated successfully!");
-                closePasswordModal();
-            }
+            else { alert("Success!"); toggleModal(false); }
         }
 
         async function handleLogout() {
@@ -303,7 +282,7 @@
             window.location.href = 'AdminLogin.html';
         }
 
-        checkSession();
+        init();
     </script>
 </body>
 </html>
