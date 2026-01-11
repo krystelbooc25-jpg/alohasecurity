@@ -6,6 +6,69 @@
     <title>Aloha Security Agency</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* --- SLIDER CSS --- */
+        .hero {
+            position: relative;
+            height: 80vh; /* Adjust height based on preference */
+            min-height: 500px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            background-color: #1a1a1a; /* Fallback color */
+        }
+
+        .hero-slides {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out; /* Smooth fade effect */
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Makes text readable */
+            z-index: 2;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+
+        /* Responsive Fix for Slider */
+        @media (max-width: 768px) {
+            .hero { height: 60vh; }
+            .hero h2 { font-size: 2rem; }
+        }
+    </style>
 </head>
 <body>
 
@@ -23,15 +86,22 @@
                 </div>
             </div>
             <nav>
-                <!-- Tinanggal ang Admin Login dito para hindi makita ng publiko -->
                 <a href="application.html" class="btn btn-primary">Apply Now</a>
             </nav>
         </div>
     </header>
 
     <main>
+        <!-- HERO SECTION WITH SLIDER -->
         <section class="hero">
+            <div class="hero-slides">
+                <!-- Palitan ang mga ito ng iyong aktwal na images sa Resources folder -->
+                <div class="slide active" style="background-image: url('Resources/1.jpg');"></div>
+                <div class="slide" style="background-image: url('Resources/2.jpg');"></div>
+                <div class="slide" style="background-image: url('Resources/3.jpg');"></div>
+            </div>
             <div class="hero-overlay"></div>
+            
             <div class="container hero-content">
                 <h2>Join Our Elite Security Team</h2>
                 <p>Protecting what matters most. Build a career with a trusted and professional agency.</p>
@@ -79,7 +149,7 @@
     </footer>
 
     <script>
-        // Loading Screen Logic
+        // --- 1. Loading Screen Logic ---
         window.addEventListener('load', () => {
             const loadingScreen = document.getElementById('loading-screen');
             loadingScreen.style.opacity = '0';
@@ -88,14 +158,29 @@
             }, 500);
         });
 
-        // Offline Status Logic
+        // --- 2. HERO SLIDER LOGIC ---
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const slideInterval = 5000; // Magpapalit kada 5 seconds
+
+        function nextSlide() {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+
+        if (slides.length > 1) {
+            setInterval(nextSlide, slideInterval);
+        }
+
+        // --- 3. Offline Status Logic ---
         const offlineOverlay = document.getElementById('offline-overlay');
         function updateOnlineStatus() {
             offlineOverlay.style.display = navigator.onLine ? 'none' : 'flex';
         }
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
-        updateOnlineStatus(); // Initial check
+        updateOnlineStatus();
     </script>
 </body>
 </html>
