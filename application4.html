@@ -6,8 +6,8 @@
     <title>Job Application - Review & Submit</title>
     <link rel="stylesheet" href="application.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- ONLY SUPABASE IS NEEDED NOW -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
     <div class="application-container">
@@ -103,119 +103,116 @@
         </main>
     </div>
 
-    <script>
-        // --- 1. INITIALIZE CLIENTS ---
-        const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
-        const { createClient } = supabase;
-        const supabaseClient = createClient(supabaseUrl, supabaseKey);
-        emailjs.init("cUpWZScep0kGgXEUm");
+   <script>
+    // --- 1. INITIALIZE SUPABASE ---
+    const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
+    const { createClient } = supabase;
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-        // --- 2. LOAD DATA AND POPULATE SUMMARY ---
-        const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
-        document.getElementById('summary-name').textContent = `${applicationData.first_name || ''} ${applicationData.last_name || ''}`;
-        document.getElementById('summary-email').textContent = applicationData.email || 'N/A';
-        document.getElementById('summary-position').textContent = applicationData.desired_position || 'N/A';
-        document.getElementById('summary-availability').textContent = applicationData.availability || 'N/A';
+    // --- 2. LOAD DATA AND POPULATE SUMMARY ---
+    const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
+    document.getElementById('summary-name').textContent = `${applicationData.first_name || ''} ${applicationData.last_name || ''}`;
+    document.getElementById('summary-email').textContent = applicationData.email || 'N/A';
+    document.getElementById('summary-position').textContent = applicationData.desired_position || 'N/A';
+    document.getElementById('summary-availability').textContent = applicationData.availability || 'N/A';
 
-        // --- 3. HANDLE FILE NAME DISPLAY ---
-        document.getElementById('resume-cv').addEventListener('change', (e) => { document.getElementById('resume-file-name').textContent = e.target.files[0]?.name || 'Resume/CV *'; });
-        document.getElementById('certificates-file').addEventListener('change', (e) => { document.getElementById('certificates-file-name').textContent = e.target.files[0]?.name || 'Certificates'; });
-        document.getElementById('valid-id').addEventListener('change', (e) => { document.getElementById('valid-id-file-name').textContent = e.target.files[0]?.name || 'Valid ID *'; });
+    // --- 3. HANDLE FILE NAME DISPLAY ---
+    document.getElementById('resume-cv').addEventListener('change', (e) => { document.getElementById('resume-file-name').textContent = e.target.files[0]?.name || 'Resume/CV *'; });
+    document.getElementById('certificates-file').addEventListener('change', (e) => { document.getElementById('certificates-file-name').textContent = e.target.files[0]?.name || 'Certificates'; });
+    document.getElementById('valid-id').addEventListener('change', (e) => { document.getElementById('valid-id-file-name').textContent = e.target.files[0]?.name || 'Valid ID *'; });
 
-        // --- 4. HANDLE FINAL SUBMISSION ---
-        document.getElementById('final-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const submitButton = document.getElementById('submit-button');
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    // --- 4. HANDLE FINAL SUBMISSION ---
+    document.getElementById('final-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const submitButton = document.getElementById('submit-button');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
-            try {
-                const resumeFile = document.getElementById('resume-cv').files[0];
-                const validIdFile = document.getElementById('valid-id').files[0];
-                if (!resumeFile || !validIdFile) { 
-                    throw new Error('Please make sure you have selected a Resume/CV and a Valid ID.'); 
-                }
-                
-                const consentBackground = document.getElementById('consent-background').checked;
-                const consentDrugTest = document.getElementById('consent-drug-test').checked;
-                const consentTruthfulness = document.getElementById('consent-truthfulness').checked;
-                if (!consentBackground || !consentDrugTest || !consentTruthfulness) { 
-                    throw new Error('You must agree to all consent statements to proceed.'); 
-                }
+        try {
+            // Check files
+            const resumeFile = document.getElementById('resume-cv').files[0];
+            const validIdFile = document.getElementById('valid-id').files[0];
+            const certificatesFile = document.getElementById('certificates-file').files[0];
 
-                const certificatesFile = document.getElementById('certificates-file').files[0];
-                const timestamp = Date.now();
-                const resumePath = `resumes/${timestamp}-${resumeFile.name}`;
-                const { error: resumeError } = await supabaseClient.storage.from('applicant-files').upload(resumePath, resumeFile);
-                if (resumeError) throw resumeError;
-                const { data: resumeUrlData } = supabaseClient.storage.from('applicant-files').getPublicUrl(resumePath);
-                applicationData.resume_url = resumeUrlData.publicUrl;
-
-                const validIdPath = `ids/${timestamp}-${validIdFile.name}`;
-                const { error: idError } = await supabaseClient.storage.from('applicant-files').upload(validIdPath, validIdFile);
-                if (idError) throw idError;
-                const { data: idUrlData } = supabaseClient.storage.from('applicant-files').getPublicUrl(validIdPath);
-                applicationData.valid_id_url = idUrlData.publicUrl;
-                
-                if (certificatesFile) {
-                    const certsPath = `certs/${timestamp}-${certificatesFile.name}`;
-                    const { error: certsError } = await supabaseClient.storage.from('applicant-files').upload(certsPath, certificatesFile);
-                    if (certsError) throw certsError;
-                    const { data: certsUrlData } = supabaseClient.storage.from('applicant-files').getPublicUrl(certsPath);
-                    applicationData.certificates_url = certsUrlData.publicUrl;
-                }
-
-                applicationData.consent_background = consentBackground;
-                applicationData.consent_drug_test = consentDrugTest;
-                applicationData.consent_truthfulness = consentTruthfulness;
-                
-                const { data, error: insertError } = await supabaseClient.from('applicants').insert([applicationData]).select();
-                if (insertError) throw insertError;
-                
-                console.log('Successfully saved data to database:', data);
-
-                const emailParams = {
-                    applicant_name: `${applicationData.first_name} ${applicationData.last_name}`,
-                    applicant_email: applicationData.email,
-                    position: applicationData.desired_position,
-                };
-                await emailjs.send('service_zgrksga', 'template_zwwho8l', emailParams);
-                console.log('Successfully sent email notification.');
-                
-                alert('Application submitted successfully! Thank you.');
-                localStorage.removeItem('applicationData');
-                window.location.href = 'index.html';
-
-      } catch (error) {
-    // This will print the actual error object to the console so you can read it
-    console.error("DETAILED ERROR:", error);
-
-    // This will alert the text message from EmailJS instead of 'undefined'
-    const displayError = error.text || error.message || "Unknown error";
-    alert("Submission stopped at Email: " + displayError);
-
-    submitButton.disabled = false;
-    submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
-}
-        });
-    </script>
-    <script>
-        const offlineOverlay = document.getElementById('offline-overlay');
-
-        function updateOnlineStatus() {
-            if (navigator.onLine) {
-                offlineOverlay.style.display = 'none';
-            } else {
-                offlineOverlay.style.display = 'flex';
+            if (!resumeFile || !validIdFile) { 
+                throw new Error('Please select both a Resume and a Valid ID.'); 
             }
+            
+            // Check consents
+            const consentBackground = document.getElementById('consent-background').checked;
+            const consentDrugTest = document.getElementById('consent-drug-test').checked;
+            const consentTruthfulness = document.getElementById('consent-truthfulness').checked;
+            if (!consentBackground || !consentDrugTest || !consentTruthfulness) { 
+                throw new Error('Please agree to all consent statements.'); 
+            }
+
+            // --- A. Upload Resume ---
+            const timestamp = Date.now();
+            const resumePath = `resumes/${timestamp}-${resumeFile.name}`;
+            const { error: rErr } = await supabaseClient.storage.from('applicant-files').upload(resumePath, resumeFile);
+            if (rErr) throw new Error('Resume upload failed: ' + rErr.message);
+            applicationData.resume_url = supabaseClient.storage.from('applicant-files').getPublicUrl(resumePath).data.publicUrl;
+
+            // --- B. Upload Valid ID ---
+            const idPath = `ids/${timestamp}-${validIdFile.name}`;
+            const { error: iErr } = await supabaseClient.storage.from('applicant-files').upload(idPath, validIdFile);
+            if (iErr) throw new Error('ID upload failed: ' + iErr.message);
+            applicationData.valid_id_url = supabaseClient.storage.from('applicant-files').getPublicUrl(idPath).data.publicUrl;
+            
+            // --- C. Upload Certificates (Optional) ---
+            if (certificatesFile) {
+                const certsPath = `certs/${timestamp}-${certificatesFile.name}`;
+                const { error: cErr } = await supabaseClient.storage.from('applicant-files').upload(certsPath, certificatesFile);
+                if (cErr) throw new Error('Certificates upload failed: ' + cErr.message);
+                applicationData.certificates_url = supabaseClient.storage.from('applicant-files').getPublicUrl(certsPath).data.publicUrl;
+            }
+
+            // Save consents to object
+            applicationData.consent_background = consentBackground;
+            applicationData.consent_drug_test = consentDrugTest;
+            applicationData.consent_truthfulness = consentTruthfulness;
+            
+            // --- D. Save to Database ---
+            const { error: insertError } = await supabaseClient.from('applicants').insert([applicationData]);
+            if (insertError) throw insertError;
+            
+            console.log('Database saved.');
+
+            // --- E. Trigger Edge Function Email ---
+            try {
+                const { error: funcError } = await supabaseClient.functions.invoke('send-email', {
+                    body: {
+                        applicant_name: `${applicationData.first_name} ${applicationData.last_name}`,
+                        applicant_email: applicationData.email,
+                        position: applicationData.desired_position,
+                    },
+                });
+                if (funcError) console.error('Email Function Error:', funcError);
+            } catch (emailErr) {
+                console.error('Email call failed:', emailErr);
+            }
+            
+            alert('Application submitted successfully!');
+            localStorage.removeItem('applicationData');
+            window.location.href = 'index.html';
+
+        } catch (error) {
+            console.error("Submission Error:", error);
+            alert("Error: " + error.message);
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
         }
+    });
 
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-
-        // Initial check
-        updateOnlineStatus();
-    </script>
+    // Offline Checker
+    const offlineOverlay = document.getElementById('offline-overlay');
+    function updateOnlineStatus() {
+        offlineOverlay.style.display = navigator.onLine ? 'none' : 'flex';
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+</script>
 </body>
 </html>
