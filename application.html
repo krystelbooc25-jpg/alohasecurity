@@ -3,75 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Application - Step 1</title>
+    <title>Job Application - Personal Information</title>
+    
+    <!-- External CSS -->
     <link rel="stylesheet" href="application.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Modern Calendar Picker (Flatpickr) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <style>
+        /* Modern adjustments for Date Picker */
+        .date-input-container {
+            position: relative;
+            width: 100%;
+        }
+        .date-input-container i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #002b5c;
+            pointer-events: none;
+            z-index: 10;
+        }
+        /* Custom styling to match your theme */
+        .flatpickr-calendar {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+            border-radius: 12px !important;
+            border: 1px solid #eee !important;
+        }
+        .flatpickr-day.selected {
+            background: #002b5c !important;
+            border-color: #002b5c !important;
+        }
+    </style>
 </head>
 <body>
+
     <div class="application-container">
         <header class="app-header">
             <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
-            <div class="logo"><h2>Job Application</h2></div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <button id="theme-toggle"><i id="theme-icon" class="fas fa-moon"></i></button>
-                <div class="step-counter">Step 1 of 4</div>
+            <div class="logo">
+                <img src="Resources/logo.jpg" alt="Logo" style="height: 45px;">
+                <div class="logo-text">
+                    <h2>Job Application</h2>
+                    <p>Aloha Security Agency</p>
+                </div>
             </div>
+            <div class="step-counter">Step 1 of 4</div>
         </header>
 
         <nav class="progress-bar">
-            <div class="step active"><div class="step-number">1</div></div>
+            <div class="step active"><div class="step-number">1</div><div class="step-label">Personal Info</div></div>
             <div class="connector"></div>
-            <div class="step"><div class="step-number">2</div></div>
+            <div class="step"><div class="step-number">2</div><div class="step-label">Position Details</div></div>
             <div class="connector"></div>
-            <div class="step"><div class="step-number">3</div></div>
+            <div class="step"><div class="step-number">3</div><div class="step-label">Experience</div></div>
             <div class="connector"></div>
-            <div class="step"><div class="step-number">4</div></div>
+            <div class="step"><div class="step-number">4</div><div class="step-label">Review & Submit</div></div>
         </nav>
 
         <main class="form-container">
-            <form id="step1-form">
-                <div class="form-group"><label>First Name *</label><input type="text" id="first-name" required></div>
-                <div class="form-group"><label>Last Name *</label><input type="text" id="last-name" required></div>
-                <div class="form-group"><label>Email Address *</label><input type="email" id="email" required></div>
-                <div class="form-group"><label>Date of Birth *</label><input type="text" id="dob" placeholder="Select Birthday" required></div>
-                <div class="form-footer">
-                    <button type="button" class="btn btn-secondary" disabled>Previous</button>
-                    <button type="submit" class="btn btn-primary">Continue</button>
+            <div class="form-header">
+                <div class="form-icon"><i class="fas fa-user"></i></div>
+                <div class="form-title">
+                    <h3>Personal Information</h3>
+                    <p>Please provide your basic personal details</p>
+                </div>
+            </div>
+
+            <form class="application-form" id="step1-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first-name">First Name *</label>
+                        <input type="text" id="first-name" name="first-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last-name">Last Name *</label>
+                        <input type="text" id="last-name" name="last-name" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="street-address">Street Address *</label>
+                        <input type="text" id="street-address" name="street-address" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City *</label>
+                        <input type="text" id="city" name="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="zip-code">ZIP Code *</label>
+                        <input type="text" id="zip-code" name="zip-code" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dob">Date of Birth *</label>
+                        <div class="date-input-container">
+                             <input type="text" id="dob" name="dob" placeholder="Select Date" required>
+                             <i class="fas fa-calendar-day"></i>
+                        </div>
+                    </div>
                 </div>
             </form>
+
+            <div id="offline-overlay">
+                <div>
+                    <h1>You are Offline</h1>
+                    <p>Please check your internet connection.</p>
+                </div>
+            </div>
+
+            <footer class="form-footer">
+                <button type="button" class="btn btn-secondary" disabled>
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button type="submit" form="step1-form" class="btn btn-primary">Continue</button>
+            </footer>
         </main>
     </div>
 
     <script>
-        // Theme Switcher Logic (Isama ito sa lahat ng pages)
-        const themeBtn = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        const body = document.body;
-        if (localStorage.getItem('theme') === 'dark') { body.classList.add('dark-mode'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
-        themeBtn.onclick = () => {
-            body.classList.toggle('dark-mode');
-            const isDark = body.classList.contains('dark-mode');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            isDark ? themeIcon.classList.replace('fa-moon', 'fa-sun') : themeIcon.classList.replace('fa-sun', 'fa-moon');
-        };
+        // --- 1. INITIALIZE MODERN CALENDAR (Flatpickr) ---
+        const dobPicker = flatpickr("#dob", {
+            dateFormat: "Y-m-d",      // Ito ang format na ise-save sa Database
+            altInput: true,           // Ito ang magandang format na makikita ng tao
+            altFormat: "F j, Y",      // Example: January 11, 2026
+            maxDate: "today",         // Bawal ang future date sa birthday
+            disableMobile: "true",    // Pinipilit ang Flatpickr theme kahit sa mobile phone
+            animate: true
+        });
 
-        // Flatpickr
-        const dobPicker = flatpickr("#dob", { dateFormat: "Y-m-d", altInput: true, altFormat: "F j, Y", maxDate: "today", disableMobile: "true" });
+        // --- 2. LOAD DATA FROM STORAGE ---
+        const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
 
-        // Save Logic
-        const step1Form = document.getElementById('step1-form');
-        step1Form.onsubmit = (e) => {
-            e.preventDefault();
-            const data = JSON.parse(localStorage.getItem('applicationData')) || {};
-            data.first_name = document.getElementById('first-name').value;
-            data.last_name = document.getElementById('last-name').value;
-            data.email = document.getElementById('email').value;
-            data.dob = document.getElementById('dob').value;
-            localStorage.setItem('applicationData', JSON.stringify(data));
+        document.getElementById('first-name').value = applicationData.first_name || '';
+        document.getElementById('last-name').value = applicationData.last_name || '';
+        document.getElementById('email').value = applicationData.email || '';
+        document.getElementById('phone').value = applicationData.phone || '';
+        document.getElementById('street-address').value = applicationData.street_address || '';
+        document.getElementById('city').value = applicationData.city || '';
+        document.getElementById('zip-code').value = applicationData.zip_code || '';
+        
+        // Load saved Date of Birth into the picker
+        if (applicationData.dob) {
+            dobPicker.setDate(applicationData.dob);
+        }
+
+        // --- 3. SAVE DATA ON SUBMIT ---
+        document.getElementById('step1-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            applicationData.first_name = document.getElementById('first-name').value;
+            applicationData.last_name = document.getElementById('last-name').value;
+            applicationData.email = document.getElementById('email').value;
+            applicationData.phone = document.getElementById('phone').value;
+            applicationData.street_address = document.getElementById('street-address').value;
+            applicationData.city = document.getElementById('city').value;
+            applicationData.zip_code = document.getElementById('zip-code').value;
+            applicationData.dob = document.getElementById('dob').value; // YYYY-MM-DD
+
+            localStorage.setItem('applicationData', JSON.stringify(applicationData));
             window.location.href = 'application2.html';
-        };
+        });
+
+        // --- 4. OFFLINE OVERLAY ---
+        const offlineOverlay = document.getElementById('offline-overlay');
+        function updateOnlineStatus() {
+            offlineOverlay.style.display = navigator.onLine ? 'none' : 'flex';
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
     </script>
 </body>
 </html>
