@@ -16,7 +16,6 @@
     <header>
         <div class="container">
             <div class="logo">
-                <!-- THIS IS THE CHANGE -->
                 <img src="Resources/logo.jpg" alt="Aloha Security Agency Logo">
                 <div class="logo-text">
                     <h1>Aloha Security Agency</h1>
@@ -24,7 +23,7 @@
                 </div>
             </div>
             <nav>
-                <a href="AdminLogin.html" class="btn btn-secondary">Admin Login</a>
+                <!-- Tinanggal ang Admin Login dito para hindi makita ng publiko -->
                 <a href="application.html" class="btn btn-primary">Apply Now</a>
             </nav>
         </div>
@@ -62,22 +61,25 @@
                 </div>
             </div>
         </section>
+
         <div id="offline-overlay">
             <div>
                 <h1>You are Offline</h1>
                 <p>Please check your internet connection.</p>
             </div>
         </div>
-        
     </main>
     
     <footer>
         <div class="container">
-            <div class="footer-column"><p>&copy; 2025 Aloha Security Agency. All Rights Reserved.</p></div>
+            <div class="footer-column">
+                <p>&copy; 2025 Aloha Security Agency. All Rights Reserved.</p>
+            </div>
         </div>
     </footer>
 
     <script>
+        // Loading Screen Logic
         window.addEventListener('load', () => {
             const loadingScreen = document.getElementById('loading-screen');
             loadingScreen.style.opacity = '0';
@@ -85,39 +87,15 @@
                 loadingScreen.style.display = 'none';
             }, 500);
         });
-    </script>
-</body>
-</html>
 
-
-    <script>
-        // Simple loading screen logic
-        window.addEventListener('load', () => {
-            const loadingScreen = document.getElementById('loading-screen');
-            // Fade out the loading screen
-            loadingScreen.style.opacity = '0';
-            // After fade out, hide it so it's not clickable
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-            }, 500); // 0.5 seconds for the fade
-        });
-    </script>
-    <script>
+        // Offline Status Logic
         const offlineOverlay = document.getElementById('offline-overlay');
-
         function updateOnlineStatus() {
-            if (navigator.onLine) {
-                offlineOverlay.style.display = 'none';
-            } else {
-                offlineOverlay.style.display = 'flex';
-            }
+            offlineOverlay.style.display = navigator.onLine ? 'none' : 'flex';
         }
-
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
-
-        // Initial check
-        updateOnlineStatus();
+        updateOnlineStatus(); // Initial check
     </script>
 </body>
 </html>
