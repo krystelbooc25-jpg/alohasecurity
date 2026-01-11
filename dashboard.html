@@ -105,10 +105,23 @@
         .reviewed { background: #f6ffed; color: #52c41a; }
         .rejected { background: #fff1f0; color: #f5222d; }
 
-        .btn-view { background: #f0f0f0; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; color: #555; transition: 0.2s; }
-        .btn-view:hover { background: var(--primary-red); color: white; }
+        /* ACTION BUTTONS */
+        .action-group { display: flex; gap: 8px; }
+        .btn-action { 
+            width: 32px; height: 32px; border: none; border-radius: 6px; 
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            transition: 0.2s; font-size: 12px;
+        }
+        .btn-view { background: #f0f0f0; color: #555; }
+        .btn-view:hover { background: #333; color: white; }
+        .btn-approve { background: #e6f7ff; color: #1890ff; }
+        .btn-approve:hover { background: #1890ff; color: white; }
+        .btn-reject { background: #fff1f0; color: #f5222d; }
+        .btn-reject:hover { background: #f5222d; color: white; }
+        .btn-delete { background: #f0f0f0; color: #999; }
+        .btn-delete:hover { background: #000; color: white; }
 
-        /* CHANGE PASSWORD MODAL */
+        /* MODAL */
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); justify-content: center; align-items: center;
@@ -174,23 +187,23 @@
                         <th>Target Position</th>
                         <th>Submission Date</th>
                         <th>Status</th>
-                        <th>Action</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <!-- Rows injected here -->
+                    <!-- Data will load here -->
                 </tbody>
             </table>
         </div>
     </main>
 
+    <!-- MODAL -->
     <div id="passwordModal" class="modal">
         <div class="modal-content">
             <h3>Update Password</h3>
-            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Enter a new secure password below.</p>
             <input type="password" id="newPassword" placeholder="New Password">
             <button class="btn-confirm" onclick="updatePassword()">Update Now</button>
-            <p onclick="toggleModal(false)" style="margin-top: 15px; cursor: pointer; font-size: 13px; color: #999;">Cancel</p>
+            <p onclick="toggleModal(false)" style="margin-top: 15px; cursor: pointer; color: #999;">Cancel</p>
         </div>
     </div>
 
@@ -209,7 +222,7 @@
 
         async function fetchApplicants() {
             const { data, error } = await _supabase.from('applicants').select('*').order('created_at', { ascending: false });
-            if (error) return console.error(error);
+            if (error) return;
             masterData = data;
             render(masterData);
             updateStats(data);
@@ -217,9 +230,9 @@
 
         function updateStats(data) {
             document.getElementById('total-count').innerText = data.length;
-            document.getElementById('pending-count').innerText = data.filter(a => a.status === 'Pending').length;
-            document.getElementById('approved-count').innerText = data.filter(a => a.status === 'Approved').length;
-            document.getElementById('rejected-count').innerText = data.filter(a => a.status === 'Rejected').length;
+            document.getElementById('pending-count').innerText = data.filter(a => (a.status||'').toLowerCase() === 'pending').length;
+            document.getElementById('approved-count').innerText = data.filter(a => (a.status||'').toLowerCase() === 'approved').length;
+            document.getElementById('rejected-count').innerText = data.filter(a => (a.status||'').toLowerCase() === 'rejected').length;
         }
 
         function render(list) {
@@ -228,53 +241,59 @@
             document.getElementById('result-count').innerText = `Showing ${list.length} applications`;
 
             list.forEach(app => {
-                // Safeguard against null values for the table display
-                const fullName = `${app.first_name || ''} ${app.last_name || ''}`;
-                const position = app.desired_position || 'Not Specified';
-                const status = app.status || 'Pending';
-
                 const tr = document.createElement('tr');
+                const status = app.status || 'Pending';
+                
                 tr.innerHTML = `
-                    <td style="font-weight: 600;">${fullName}</td>
-                    <td><span style="color: #666;">${position}</span></td>
-                    <td style="color: #999; font-size: 13px;">${new Date(app.created_at).toLocaleDateString()}</td>
+                    <td style="font-weight: 600;">${app.first_name || ''} ${app.last_name || ''}</td>
+                    <td>${app.desired_position || 'N/A'}</td>
+                    <td style="color: #999;">${new Date(app.created_at).toLocaleDateString()}</td>
                     <td><span class="badge ${status.toLowerCase()}">${status}</span></td>
                     <td>
-                        <button class="btn-view" onclick="window.location.href='view-applicant.html?id=${app.id}'">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
+                        <div class="action-group">
+                            <button class="btn-action btn-view" title="View" onclick="window.location.href='view-applicant.html?id=${app.id}'"><i class="fas fa-eye"></i></button>
+                            <button class="btn-action btn-approve" title="Approve" onclick="updateStatus('${app.id}', 'Approved')"><i class="fas fa-check"></i></button>
+                            <button class="btn-action btn-reject" title="Reject" onclick="updateStatus('${app.id}', 'Rejected')"><i class="fas fa-times"></i></button>
+                            <button class="btn-action btn-delete" title="Delete" onclick="deleteApplicant('${app.id}')"><i class="fas fa-trash"></i></button>
+                        </div>
                     </td>
                 `;
                 body.appendChild(tr);
             });
         }
 
-        // --- FIXED SEARCH FUNCTION ---
+        // --- DATABASE ACTIONS ---
+        async function updateStatus(id, newStatus) {
+            const { error } = await _supabase.from('applicants').update({ status: newStatus }).eq('id', id);
+            if (error) alert("Error updating status: " + error.message);
+            else fetchApplicants(); // Refresh data
+        }
+
+        async function deleteApplicant(id) {
+            if (!confirm("Are you sure you want to delete this application?")) return;
+            const { error } = await _supabase.from('applicants').delete().eq('id', id);
+            if (error) alert("Error deleting: " + error.message);
+            else fetchApplicants(); // Refresh data
+        }
+
         function filterTable() {
             const term = document.getElementById('searchInput').value.toLowerCase();
-            
-            const filtered = masterData.filter(app => {
-                // We use || '' to ensure we are searching against a string, even if DB value is null
-                const nameMatch = `${app.first_name || ''} ${app.last_name || ''}`.toLowerCase().includes(term);
-                const posMatch = (app.desired_position || '').toLowerCase().includes(term);
-                const emailMatch = (app.email || '').toLowerCase().includes(term);
-                
-                return nameMatch || posMatch || emailMatch;
-            });
-
+            const filtered = masterData.filter(app => 
+                `${app.first_name} ${app.last_name}`.toLowerCase().includes(term) ||
+                (app.desired_position || '').toLowerCase().includes(term) ||
+                (app.email || '').toLowerCase().includes(term)
+            );
             render(filtered);
         }
 
-        function toggleModal(show) {
-            document.getElementById('passwordModal').style.display = show ? 'flex' : 'none';
-        }
-
+        function toggleModal(show) { document.getElementById('passwordModal').style.display = show ? 'flex' : 'none'; }
+        
         async function updatePassword() {
             const pwd = document.getElementById('newPassword').value;
             if (pwd.length < 6) return alert("Password too short!");
             const { error } = await _supabase.auth.updateUser({ password: pwd });
             if (error) alert(error.message);
-            else { alert("Success!"); toggleModal(false); }
+            else { alert("Password Updated!"); toggleModal(false); }
         }
 
         async function handleLogout() {
