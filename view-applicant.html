@@ -147,128 +147,97 @@
     </div>
 
     <script>
-        // 1. SUPABASE CONFIG
-        const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
-        const { createClient } = supabase;
-        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+    // 1. INITIALIZE SUPABASE
+    const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
+    const { createClient } = supabase;
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-        // 2. GET ID FROM URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const applicantId = urlParams.get('id');
+    // 2. GET ID FROM URL (Global)
+    const urlParams = new URLSearchParams(window.location.search);
+    const applicantId = urlParams.get('id');
 
-        // 3. LOAD DATA ON PAGE LOAD
-        async function loadApplicantDetails() {
-            if (!applicantId) {
-                alert("Error: No applicant ID found.");
-                return;
-            }
-
-            const { data: app, error } = await supabaseClient
-                .from('applicants')
-                .select('*')
-                .eq('id', applicantId)
-                .single();
-
-            if (error) {
-                console.error("Fetch Error:", error);
-                return;
-            }
-
-            const or_na = (val) => val || 'N/A';
-
-            // Populate Info
-            document.getElementById('applicant-name').textContent = `${app.first_name} ${app.last_name}`;
-            document.getElementById('applicant-email').textContent = app.email;
-            document.getElementById('applicant-phone').textContent = app.phone;
-            document.getElementById('applicant-address').textContent = `${app.street_address}, ${app.city}`;
-            document.getElementById('applicant-dob').textContent = app.dob;
-
-            // Position Info
-            document.getElementById('applicant-position-main').textContent = `Applying for: ${or_na(app.desired_position)}`;
-            document.getElementById('applicant-position').textContent = or_na(app.desired_position);
-            document.getElementById('applicant-availability').textContent = or_na(app.availability);
-            document.getElementById('applicant-start').textContent = or_na(app.start_date);
-            document.getElementById('applicant-salary').textContent = or_na(app.salary_range);
-            document.getElementById('applicant-license').textContent = or_na(app.drivers_license);
-            document.getElementById('applicant-transport').textContent = or_na(app.transportation);
-
-            // Experience Info
-            document.getElementById('applicant-experience').textContent = or_na(app.security_experience);
-            document.getElementById('applicant-education').textContent = or_na(app.education_background);
-            document.getElementById('applicant-refs').textContent = or_na(app.references);
-
-            // Document Info
-            document.getElementById('id-type-label').textContent = or_na(app.id_type);
-            
-            if (app.resume_url) document.getElementById('download-resume-btn').href = app.resume_url;
-            if (app.valid_id_url) document.getElementById('applicant-id-photo').src = app.valid_id_url;
+    async function loadApplicantDetails() {
+        if (!applicantId) {
+            alert("Mali: Walang ID na nahanap sa URL.");
+            return;
         }
 
-        // 4. ACTION: REJECT
-        async function processStatus(status) {
-            if(!confirm(`Sigurado ka bang i-${status} ang aplikanteng ito?`)) return;
-            
-            const { error } = await supabaseClient
-                .from('applicants')
-                .update({ status: status })
-                .eq('id', applicantId);
+        const { data: app, error } = await supabaseClient
+            .from('applicants')
+            .select('*')
+            .eq('id', applicantId)
+            .single();
 
-            if (!error) {
-                alert(`Applicant has been ${status}.`);
-                window.location.href = 'dashboard.html';
-            } else {
-                alert("Error updating status: " + error.message);
-            }
+        if (error) {
+            console.error("Fetch Error:", error);
+            return;
         }
 
-        // 5. MODAL CONTROLS
-        function openAssignModal() { document.getElementById('assignModal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('assignModal').style.display = 'none'; }
+        // Populate Data
+        document.getElementById('applicant-name').textContent = app.first_name + " " + app.last_name;
+        document.getElementById('applicant-email').textContent = app.email;
+        document.getElementById('applicant-phone').textContent = app.phone;
+        document.getElementById('applicant-address').textContent = app.street_address || 'N/A';
+        document.getElementById('applicant-dob').textContent = app.dob;
+        document.getElementById('applicant-position-main').textContent = "Applying for: " + (app.desired_position || 'Guard');
+        document.getElementById('applicant-position').textContent = app.desired_position || 'N/A';
+        document.getElementById('applicant-experience').textContent = app.security_experience || 'None';
+        document.getElementById('id-type-label').textContent = app.id_type || 'N/A';
+        
+        if (app.resume_url) document.getElementById('download-resume-btn').href = app.resume_url;
+        if (app.valid_id_url) document.getElementById('applicant-id-photo').src = app.valid_id_url;
+    }
 
-        // 6. ACTION: APPROVE AND ASSIGN (FINAL FIXED VERSION)
-        async function confirmApproval() {
-            const selectedBranch = document.getElementById('branch-dropdown').value;
-            const btn = document.querySelector('#assignModal .btn-primary');
-            
-            if (!selectedBranch) {
-                alert("Mangyaring pumili muna ng branch o lugar.");
-                return;
-            }
+    // MODAL CONTROLS
+    function openAssignModal() { document.getElementById('assignModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('assignModal').style.display = 'none'; }
 
-            // Disable button para iwas double-entry
-            btn.disabled = true;
-            btn.innerText = "Saving...";
-
-            try {
-                console.log("Updating Applicant ID:", applicantId, "to Branch:", selectedBranch);
-
-                const { data, error } = await supabaseClient
-                    .from('applicants')
-                    .update({ 
-                        status: 'Approved',          
-                        assigned_branch: selectedBranch 
-                    })
-                    .eq('id', applicantId)
-                    .select();
-
-                if (error) throw error;
-
-                if (data) {
-                    console.log("Update Success:", data);
-                    alert('Tagumpay! Ang aplikante ay Approved na at naka-assign sa ' + selectedBranch);
-                    window.location.href = 'dashboard.html';
-                }
-
-            } catch (err) {
-                console.error("Update Error:", err);
-                alert('Nagka-error sa pag-save: ' + err.message);
-                btn.disabled = false;
-                btn.innerText = "Confirm & Deploy";
-            }
+    // --- ANG PINAKA-IMPORTANTENG FUNCTION ---
+    async function confirmApproval() {
+        const selectedBranch = document.getElementById('branch-dropdown').value;
+        if (!selectedBranch) {
+            alert("Pumili muna ng branch.");
+            return;
         }
 
-        document.addEventListener('DOMContentLoaded', loadApplicantDetails);
-    </script>
+        const btn = document.querySelector('#assignModal .btn-primary');
+        btn.disabled = true;
+        btn.innerText = "Saving to Database...";
+
+        console.log("Attempting to update ID:", applicantId);
+
+        // UPDATE COMMAND
+        const { data, error } = await supabaseClient
+            .from('applicants')
+            .update({ 
+                status: 'Approved',
+                assigned_branch: selectedBranch 
+            })
+            .eq('id', applicantId)
+            .select(); // Mahalaga ito para ma-confirm ang update
+
+        if (error) {
+            alert("Update Failed: " + error.message);
+            console.error(error);
+            btn.disabled = false;
+            btn.innerText = "Confirm & Deploy";
+        } else {
+            console.log("Update Success:", data);
+            alert("Tagumpay! Approved na si " + document.getElementById('applicant-name').textContent);
+            window.location.href = 'dashboard.html';
+        }
+    }
+
+    // ACTION: REJECT
+    async function processStatus(status) {
+        if(!confirm("Sigurado ka ba?")) return;
+        const { error } = await supabaseClient.from('applicants').update({ status: status }).eq('id', applicantId);
+        if (error) alert(error.message);
+        else window.location.href = 'dashboard.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', loadApplicantDetails);
+</script>
 </body>
 </html>
