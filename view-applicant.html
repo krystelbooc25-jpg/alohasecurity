@@ -3,20 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Applicant Details</title>
+    <title>View Applicant Details - Aloha Security</title>
     <link rel="stylesheet" href="view-applicant.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .admin-actions { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; display: flex; justify-content: flex-end; gap: 15px; border: 1px solid #eee; }
-        .btn-approve { background: #2ecc71 !important; color: white !important; border: none; cursor: pointer; padding: 12px 25px; border-radius: 8px; font-weight: bold; }
-        .btn-reject { background: #e74c3c !important; color: white !important; border: none; cursor: pointer; padding: 12px 25px; border-radius: 8px; font-weight: bold; }
+        /* Pinagandang style para sa Admin Actions at Modal */
+        .admin-actions {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            border: 1px solid #eee;
+        }
+        .btn-approve { background: #2ecc71 !important; color: white !important; border: none; cursor: pointer; transition: 0.3s; }
+        .btn-reject { background: #e74c3c !important; color: white !important; border: none; cursor: pointer; transition: 0.3s; }
+        .btn-approve:hover, .btn-reject:hover { opacity: 0.8; transform: translateY(-2px); }
+        .btn-approve:disabled { background: #ccc !important; cursor: not-allowed; }
+        
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 400px; text-align: center; }
-        .branch-select { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        .id-image-container { margin-top: 15px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; max-width: 400px; }
-        .id-image-container img { width: 100%; display: block; cursor: pointer; }
-        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; white-space: pre-wrap; font-family: inherit; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .branch-select { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+
+        .id-image-container {
+            margin-top: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 450px;
+            background: #f0f0f0;
+        }
+        .id-image-container img {
+            width: 100%;
+            display: block;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .id-image-container img:hover { opacity: 0.9; }
+        .doc-label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; white-space: pre-wrap; font-family: inherit; font-size: 14px; border: 1px solid #eee; }
+        
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 600px) { .grid-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -32,100 +63,209 @@
                     <div class="avatar"><i class="fas fa-user"></i></div>
                     <div>
                         <h2 id="applicant-name">Loading...</h2>
-                        <p id="applicant-position-main">Loading...</p>
+                        <p id="applicant-position-main">Applying for: Loading...</p>
                     </div>
                 </div>
                 <div class="action-buttons">
-                    <a id="download-resume-btn" href="#" target="_blank" class="btn btn-secondary">View Resume</a>
+                    <a id="download-resume-btn" href="#" target="_blank" class="btn btn-secondary"><i class="fas fa-file-pdf"></i> View Resume/CV</a>
                 </div>
             </div>
 
             <div class="card-body">
+                <!-- PERSONAL INFO -->
                 <div class="detail-section">
-                    <h3>Personal Information</h3>
-                    <p><strong>Email:</strong> <span id="applicant-email"></span></p>
-                    <p><strong>Phone:</strong> <span id="applicant-phone"></span></p>
-                    <p><strong>Address:</strong> <span id="applicant-address"></span></p>
-                </div>
-
-                <div class="detail-section">
-                    <h3>Experience</h3>
-                    <pre id="applicant-experience"></pre>
-                </div>
-
-                <div class="detail-section">
-                    <h3>Valid ID</h3>
-                    <div class="id-image-container">
-                        <img id="applicant-id-photo" src="" alt="ID Photo">
+                    <h3><i class="fas fa-info-circle"></i> Personal Information</h3>
+                    <div class="grid-layout">
+                        <p><strong>Email:</strong> <span id="applicant-email"></span></p>
+                        <p><strong>Phone:</strong> <span id="applicant-phone"></span></p>
+                        <p><strong>Address:</strong> <span id="applicant-address"></span></p>
+                        <p><strong>Date of Birth:</strong> <span id="applicant-dob"></span></p>
                     </div>
                 </div>
 
+                <!-- POSITION DETAILS -->
+                <div class="detail-section">
+                    <h3><i class="fas fa-briefcase"></i> Position Details</h3>
+                    <div class="grid-layout">
+                        <p><strong>Desired Position:</strong> <span id="applicant-position"></span></p>
+                        <p><strong>Availability:</strong> <span id="applicant-availability"></span></p>
+                        <p><strong>Expected Start:</strong> <span id="applicant-start"></span></p>
+                        <p><strong>Salary Range:</strong> <span id="applicant-salary"></span></p>
+                        <p><strong>Driver's License:</strong> <span id="applicant-license"></span></p>
+                        <p><strong>Transportation:</strong> <span id="applicant-transport"></span></p>
+                    </div>
+                </div>
+
+                <!-- EXPERIENCE -->
+                <div class="detail-section">
+                    <h3><i class="fas fa-history"></i> Experience & Background</h3>
+                    <p><strong>Security Experience:</strong></p>
+                    <pre id="applicant-experience"></pre>
+                    <p><strong>Education Background:</strong></p>
+                    <pre id="applicant-education"></pre>
+                    <p><strong>Professional References:</strong></p>
+                    <pre id="applicant-refs"></pre>
+                </div>
+
+                <!-- DOCUMENTS -->
+                <div class="detail-section">
+                    <h3><i class="fas fa-id-card"></i> Submitted Documents</h3>
+                    <div>
+                        <span class="doc-label">Type of ID: <span id="id-type-label" style="color: #D2042D;"></span></span>
+                        <div class="id-image-container">
+                            <img id="applicant-id-photo" src="https://via.placeholder.com/450x250?text=No+ID+Uploaded" alt="Valid ID" title="Click to view full image" onclick="window.open(this.src)">
+                        </div>
+                        <small style="color: #888;">(Click the image above to view it in full size)</small>
+                    </div>
+                </div>
+
+                <!-- ADMIN ACTIONS -->
                 <div class="admin-actions">
-                    <button class="btn-reject" onclick="processStatus('Rejected')">Reject</button>
-                    <button class="btn-approve" onclick="openAssignModal()">Approve & Deploy</button>
+                    <button class="btn btn-reject" onclick="processStatus('Rejected')"><i class="fas fa-times"></i> Reject Applicant</button>
+                    <button class="btn btn-approve" onclick="openAssignModal()"><i class="fas fa-check"></i> Approve & Deploy</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- ASSIGNMENT MODAL -->
     <div class="modal" id="assignModal">
         <div class="modal-content">
-            <h3>Assign Deployment</h3>
+            <h3 style="color: #D2042D;"><i class="fas fa-map-marker-alt"></i> Assign Deployment</h3>
+            <p>Pumili ng branch kung saan ia-assign ang guard na ito:</p>
             <select id="branch-dropdown" class="branch-select">
-                <option value="">-- Select Branch --</option>
+                <option value="">-- Pumili ng Lugar --</option>
                 <option value="Manila Main">Manila Main</option>
                 <option value="Quezon City">Quezon City</option>
                 <option value="Makati Hub">Makati Hub</option>
                 <option value="Davao Branch">Davao Branch</option>
                 <option value="Cebu Office">Cebu Office</option>
             </select>
-            <button class="btn-approve" style="width:100%" onclick="confirmApproval()">Confirm & Deploy</button>
-            <p onclick="closeModal()" style="margin-top:10px; cursor:pointer; color:grey;">Cancel</p>
+            <button class="btn btn-primary btn-approve" style="width: 100%; padding: 12px; border-radius: 8px; font-weight: bold;" onclick="confirmApproval()">Confirm & Deploy</button>
+            <p onclick="closeModal()" style="margin-top:15px; cursor:pointer; color:#999; font-size: 14px;">Cancel</p>
         </div>
     </div>
 
     <script>
+        // 1. SUPABASE CONFIG
         const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
+        // 2. GET ID FROM URL
         const urlParams = new URLSearchParams(window.location.search);
         const applicantId = urlParams.get('id');
 
+        // 3. LOAD DATA ON PAGE LOAD
         async function loadApplicantDetails() {
-            if (!applicantId) return;
-            const { data: app, error } = await supabaseClient.from('applicants').select('*').eq('id', applicantId).single();
-            if (error) return console.log(error);
+            if (!applicantId) {
+                alert("Error: No applicant ID found.");
+                return;
+            }
 
-            document.getElementById('applicant-name').textContent = app.first_name + " " + app.last_name;
+            const { data: app, error } = await supabaseClient
+                .from('applicants')
+                .select('*')
+                .eq('id', applicantId)
+                .single();
+
+            if (error) {
+                console.error("Fetch Error:", error);
+                return;
+            }
+
+            const or_na = (val) => val || 'N/A';
+
+            // Populate Info
+            document.getElementById('applicant-name').textContent = `${app.first_name} ${app.last_name}`;
             document.getElementById('applicant-email').textContent = app.email;
             document.getElementById('applicant-phone').textContent = app.phone;
-            document.getElementById('applicant-address').textContent = app.street_address;
-            document.getElementById('applicant-experience').textContent = app.security_experience || 'None';
-            document.getElementById('applicant-id-photo').src = app.valid_id_url || '';
+            document.getElementById('applicant-address').textContent = `${app.street_address}, ${app.city}`;
+            document.getElementById('applicant-dob').textContent = app.dob;
+
+            // Position Info
+            document.getElementById('applicant-position-main').textContent = `Applying for: ${or_na(app.desired_position)}`;
+            document.getElementById('applicant-position').textContent = or_na(app.desired_position);
+            document.getElementById('applicant-availability').textContent = or_na(app.availability);
+            document.getElementById('applicant-start').textContent = or_na(app.start_date);
+            document.getElementById('applicant-salary').textContent = or_na(app.salary_range);
+            document.getElementById('applicant-license').textContent = or_na(app.drivers_license);
+            document.getElementById('applicant-transport').textContent = or_na(app.transportation);
+
+            // Experience Info
+            document.getElementById('applicant-experience').textContent = or_na(app.security_experience);
+            document.getElementById('applicant-education').textContent = or_na(app.education_background);
+            document.getElementById('applicant-refs').textContent = or_na(app.references);
+
+            // Document Info
+            document.getElementById('id-type-label').textContent = or_na(app.id_type);
+            
             if (app.resume_url) document.getElementById('download-resume-btn').href = app.resume_url;
+            if (app.valid_id_url) document.getElementById('applicant-id-photo').src = app.valid_id_url;
         }
 
+        // 4. ACTION: REJECT
         async function processStatus(status) {
-            const { error } = await supabaseClient.from('applicants').update({ status: status }).eq('id', applicantId);
-            if (error) alert("Error: " + error.message);
-            else window.location.href = 'dashboard.html';
+            if(!confirm(`Sigurado ka bang i-${status} ang aplikanteng ito?`)) return;
+            
+            const { error } = await supabaseClient
+                .from('applicants')
+                .update({ status: status })
+                .eq('id', applicantId);
+
+            if (!error) {
+                alert(`Applicant has been ${status}.`);
+                window.location.href = 'dashboard.html';
+            } else {
+                alert("Error updating status: " + error.message);
+            }
         }
 
+        // 5. MODAL CONTROLS
         function openAssignModal() { document.getElementById('assignModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('assignModal').style.display = 'none'; }
 
+        // 6. ACTION: APPROVE AND ASSIGN (FINAL FIXED VERSION)
         async function confirmApproval() {
-            const branch = document.getElementById('branch-dropdown').value;
-            if (!branch) return alert("Select a branch!");
+            const selectedBranch = document.getElementById('branch-dropdown').value;
+            const btn = document.querySelector('#assignModal .btn-primary');
+            
+            if (!selectedBranch) {
+                alert("Mangyaring pumili muna ng branch o lugar.");
+                return;
+            }
 
-            const { error } = await supabaseClient.from('applicants').update({ 
-                status: 'Approved', 
-                assigned_branch: branch 
-            }).eq('id', applicantId);
+            // Disable button para iwas double-entry
+            btn.disabled = true;
+            btn.innerText = "Saving...";
 
-            if (error) alert("Error: " + error.message);
-            else window.location.href = 'dashboard.html';
+            try {
+                console.log("Updating Applicant ID:", applicantId, "to Branch:", selectedBranch);
+
+                const { data, error } = await supabaseClient
+                    .from('applicants')
+                    .update({ 
+                        status: 'Approved',          
+                        assigned_branch: selectedBranch 
+                    })
+                    .eq('id', applicantId)
+                    .select();
+
+                if (error) throw error;
+
+                if (data) {
+                    console.log("Update Success:", data);
+                    alert('Tagumpay! Ang aplikante ay Approved na at naka-assign sa ' + selectedBranch);
+                    window.location.href = 'dashboard.html';
+                }
+
+            } catch (err) {
+                console.error("Update Error:", err);
+                alert('Nagka-error sa pag-save: ' + err.message);
+                btn.disabled = false;
+                btn.innerText = "Confirm & Deploy";
+            }
         }
 
         document.addEventListener('DOMContentLoaded', loadApplicantDetails);
