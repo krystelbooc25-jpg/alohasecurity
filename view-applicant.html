@@ -3,138 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Applicant Details - Aloha Security</title>
+    <title>View Applicant Details</title>
     <link rel="stylesheet" href="view-applicant.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Karagdagang style para sa buttons sa baba */
+        .admin-actions {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            border: 1px solid #eee;
+        }
+        .btn-approve { background: #2ecc71 !important; color: white !important; border: none; }
+        .btn-reject { background: #e74c3c !important; color: white !important; border: none; }
+        
+        /* Modal Style */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 400px; text-align: center; }
+        .branch-select { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+    </style>
 </head>
 <body>
     <div class="container">
         <header class="page-header">
-            <div class="header-left">
-                <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Dashboard</a>
-                <h1>Applicant Profile</h1>
-            </div>
-            <button id="theme-toggle" class="theme-btn"><i id="theme-icon" class="fas fa-moon"></i></button>
+            <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+            <h1>Applicant Details</h1>
         </header>
 
         <div class="applicant-card">
-            <!-- Card Header: Profile Summary -->
             <div class="card-header">
                 <div class="profile-info">
                     <div class="avatar"><i class="fas fa-user"></i></div>
-                    <div class="name-box">
+                    <div>
                         <h2 id="applicant-name">Loading...</h2>
-                        <p id="applicant-position"><i class="fas fa-briefcase"></i> Loading position...</p>
-                        <p id="applicant-branch" class="branch-tag"><i class="fas fa-map-marker-alt"></i> Unassigned</p>
+                        <p id="applicant-position">Applying for: Loading...</p>
                     </div>
                 </div>
                 <div class="action-buttons">
-                    <a id="download-resume-btn" href="#" target="_blank" class="btn btn-secondary"><i class="fas fa-file-download"></i> Resume</a>
-                    <button id="email-applicant-btn" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send Email</button>
+                    <a id="download-resume-btn" href="#" target="_blank" class="btn btn-secondary"><i class="fas fa-download"></i> Resume</a>
                 </div>
             </div>
 
-            <!-- Card Body: Full Details -->
             <div class="card-body">
                 <div class="detail-section">
-                    <h3><i class="fas fa-id-card"></i> Personal Information</h3>
+                    <h3><i class="fas fa-info-circle"></i> Personal Information</h3>
                     <div class="grid-layout">
-                        <div class="info-item"><label>Email</label><p id="applicant-email">-</p></div>
-                        <div class="info-item"><label>Phone</label><p id="applicant-phone">-</p></div>
-                        <div class="info-item"><label>Address</label><p id="applicant-address">-</p></div>
-                        <div class="info-item"><label>Date of Birth</label><p id="applicant-dob">-</p></div>
+                        <p><strong>Email:</strong> <span id="applicant-email"></span></p>
+                        <p><strong>Phone:</strong> <span id="applicant-phone"></span></p>
+                        <p><strong>Address:</strong> <span id="applicant-address"></span></p>
+                        <p><strong>Date of Birth:</strong> <span id="applicant-dob"></span></p>
                     </div>
                 </div>
-
                 <div class="detail-section">
-                    <h3><i class="fas fa-clipboard-check"></i> Position & Availability</h3>
-                    <div class="grid-layout">
-                        <div class="info-item"><label>Availability</label><p id="applicant-availability">-</p></div>
-                        <div class="info-item"><label>Start Date</label><p id="applicant-start-date">-</p></div>
-                        <div class="info-item"><label>Desired Salary</label><p id="applicant-salary">-</p></div>
-                        <div class="info-item"><label>ID Provided</label><p id="applicant-id-type">-</p></div>
-                    </div>
+                    <h3><i class="fas fa-briefcase"></i> Background</h3>
+                    <p><strong>Security Experience:</strong></p>
+                    <pre id="applicant-experience"></pre>
                 </div>
 
-                <div class="detail-section">
-                    <h3><i class="fas fa-history"></i> Experience & Background</h3>
-                    <div class="text-block">
-                        <label>Security Experience</label>
-                        <pre id="applicant-experience">No experience listed.</pre>
-                    </div>
-                    <div class="text-block">
-                        <label>Education</label>
-                        <pre id="applicant-education">No education details.</pre>
-                    </div>
-                    <div class="text-block">
-                        <label>References</label>
-                        <pre id="applicant-references">No references provided.</pre>
-                    </div>
+                <!-- DITO NALAGAY ANG APPROVE AT REJECT BUTTONS -->
+                <div class="admin-actions">
+                    <button class="btn btn-reject" onclick="processStatus('Rejected')"><i class="fas fa-times"></i> Reject Applicant</button>
+                    <button class="btn btn-approve" onclick="openAssignModal()"><i class="fas fa-check"></i> Approve Applicant</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA SA PAG-ASSIGN NG BRANCH -->
+    <div class="modal" id="assignModal">
+        <div class="modal-content">
+            <h3 style="color: #D2042D;">Assign Deployment</h3>
+            <p>Pumili ng branch kung saan ia-assign ang guard na ito:</p>
+            <select id="branch-dropdown" class="branch-select">
+                <option value="Manila Main">Manila Main</option>
+                <option value="Quezon City">Quezon City</option>
+                <option value="Makati Hub">Makati Hub</option>
+                <option value="Davao Branch">Davao Branch</option>
+                <option value="Cebu Office">Cebu Office</option>
+            </select>
+            <button class="btn btn-primary" style="width: 100%; background: #2ecc71; border:none;" onclick="confirmApproval()">Confirm & Deploy</button>
+            <p onclick="closeModal()" style="margin-top:15px; cursor:pointer; color:#999;">Cancel</p>
         </div>
     </div>
 
    <script>
         const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-        // --- THEME LOGIC ---
-        const themeBtn = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-            themeIcon.classList.replace('fa-moon', 'fa-sun');
-        }
-        themeBtn.onclick = () => {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            isDark ? themeIcon.classList.replace('fa-moon', 'fa-sun') : themeIcon.classList.replace('fa-sun', 'fa-moon');
-        };
+        const urlParams = new URLSearchParams(window.location.search);
+        const applicantId = urlParams.get('id');
 
         async function loadApplicantDetails() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const applicantId = urlParams.get('id');
             if (!applicantId) return;
 
-            const { data: app, error } = await _supabase.from('applicants').select('*').eq('id', applicantId).single();
-            
-            if (error || !app) {
-                alert("Error: Applicant not found.");
+            const { data: app, error } = await supabaseClient.from('applicants').select('*').eq('id', applicantId).single();
+            if (error) return;
+
+            document.getElementById('applicant-name').textContent = `${app.first_name} ${app.last_name}`;
+            document.getElementById('applicant-position').textContent = `Applying for: ${app.desired_position || 'Guard'}`;
+            document.getElementById('applicant-email').textContent = app.email;
+            document.getElementById('applicant-phone').textContent = app.phone;
+            document.getElementById('applicant-address').textContent = app.street_address;
+            document.getElementById('applicant-dob').textContent = app.dob;
+            document.getElementById('applicant-experience').textContent = app.security_experience || 'None';
+
+            if (app.resume_url) document.getElementById('download-resume-btn').href = app.resume_url;
+        }
+
+        // Action Logic
+        async function processStatus(status) {
+            if(!confirm(`Sigurado ka bang i-${status} ang aplikanteng ito?`)) return;
+            const { error } = await supabaseClient.from('applicants').update({ status: status }).eq('id', applicantId);
+            if (!error) {
+                alert(`Applicant ${status}!`);
                 window.location.href = 'dashboard.html';
-                return;
             }
+        }
 
-            const or_na = (text) => text || 'N/A';
-            
-            // Populate Fields
-            document.getElementById('applicant-name').textContent = `${or_na(app.first_name)} ${or_na(app.last_name)}`;
-            document.getElementById('applicant-position').innerHTML = `<i class="fas fa-briefcase"></i> ${or_na(app.desired_position)}`;
-            document.getElementById('applicant-branch').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${or_na(app.assigned_branch)}`;
-            document.getElementById('applicant-email').textContent = or_na(app.email);
-            document.getElementById('applicant-phone').textContent = or_na(app.phone);
-            document.getElementById('applicant-address').textContent = `${or_na(app.street_address)}, ${or_na(app.city)}`;
-            document.getElementById('applicant-dob').textContent = or_na(app.dob);
-            document.getElementById('applicant-availability').textContent = or_na(app.availability);
-            document.getElementById('applicant-start-date').textContent = or_na(app.start_date);
-            document.getElementById('applicant-salary').textContent = or_na(app.salary_range);
-            document.getElementById('applicant-id-type').textContent = or_na(app.id_type);
-            document.getElementById('applicant-experience').textContent = or_na(app.security_experience);
-            document.getElementById('applicant-education').textContent = or_na(app.education_background);
-            document.getElementById('applicant-references').textContent = or_na(app.references);
+        function openAssignModal() { document.getElementById('assignModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('assignModal').style.display = 'none'; }
 
-            // Resume Button
-            const resumeBtn = document.getElementById('download-resume-btn');
-            if (app.resume_url) resumeBtn.href = app.resume_url;
-            else resumeBtn.style.display = 'none';
+        async function confirmApproval() {
+            const selectedBranch = document.getElementById('branch-dropdown').value;
+            const { error } = await supabaseClient.from('applicants').update({ 
+                status: 'Approved',
+                assigned_branch: selectedBranch 
+            }).eq('id', applicantId);
 
-            // Email Button
-            document.getElementById('email-applicant-btn').onclick = () => {
-                window.location.href = `mailto:${app.email}?subject=Job Application Update - Aloha Security`;
-            };
+            if (!error) {
+                alert('Approved and Assigned successfully!');
+                window.location.href = 'dashboard.html';
+            }
         }
 
         document.addEventListener('DOMContentLoaded', loadApplicantDetails);
