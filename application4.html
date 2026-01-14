@@ -86,8 +86,8 @@
     <!-- CUSTOM MODAL HTML -->
     <div id="duplicate-modal" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-icon"><i class="fas fa-exclamation-circle"></i></div>
-            <h2>Duplicate Entry</h2>
+            <div id="modal-icon-div" class="modal-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <h2 id="modal-title">Duplicate Entry</h2>
             <p id="modal-msg">We're sorry, but an application with this name and date of birth already exists in our system. Multiple applications are not permitted.</p>
             <button class="modal-btn" onclick="closeModal()">I Understand</button>
         </div>
@@ -153,9 +153,11 @@
     document.getElementById('summary-email').innerText = applicationData.email || 'N/A';
     document.getElementById('summary-position').innerText = applicationData.desired_position || 'N/A';
 
-    // Show Custom Modal
-    function showModal(msg) {
-        if(msg) document.getElementById('modal-msg').innerText = msg;
+    // Enhanced Show Custom Modal
+    function showModal(title, msg, iconClass = "fa-exclamation-circle") {
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-msg').innerText = msg;
+        document.getElementById('modal-icon-div').innerHTML = `<i class="fas ${iconClass}"></i>`;
         document.getElementById('duplicate-modal').classList.add('active');
     }
 
@@ -173,6 +175,23 @@
         btn.innerText = "Processing...";
 
         try {
+            // --- AGE REQUIREMENT CHECK (21+) ---
+            const birthDate = new Date(applicationData.dob);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            if (age < 21) {
+                btn.disabled = false;
+                btn.innerText = "Submit Application";
+                showModal("Age Requirement", "You must be at least 21 years old to apply for a position at Aloha Security Agency.", "fa-user-clock");
+                return;
+            }
+
             // DUPLICATE CHECK
             const { data: dup, error: nameErr } = await _supabase
                 .from('applicants')
@@ -182,10 +201,12 @@
                 .eq('dob', applicationData.dob)
                 .limit(1);
 
+            if (nameErr) throw nameErr;
+
             if (dup && dup.length > 0) {
                 btn.disabled = false;
                 btn.innerText = "Submit Application";
-                showModal(); 
+                showModal("Duplicate Entry", "We're sorry, but an application with this name and date of birth already exists in our system."); 
                 return;
             }
 
@@ -195,17 +216,21 @@
             const idFile = document.getElementById('valid-id').files[0];
             const ts = Date.now();
 
-            await _supabase.storage.from('applicant-files').upload(`resumes/${ts}-${resumeFile.name}`, resumeFile);
+            const { error: rErr } = await _supabase.storage.from('applicant-files').upload(`resumes/${ts}-${resumeFile.name}`, resumeFile);
+            if (rErr) throw rErr;
             applicationData.resume_url = _supabase.storage.from('applicant-files').getPublicUrl(`resumes/${ts}-${resumeFile.name}`).data.publicUrl;
 
-            await _supabase.storage.from('applicant-files').upload(`ids/${ts}-${idFile.name}`, idFile);
+            const { error: iErr } = await _supabase.storage.from('applicant-files').upload(`ids/${ts}-${idFile.name}`, idFile);
+            if (iErr) throw iErr;
             applicationData.valid_id_url = _supabase.storage.from('applicant-files').getPublicUrl(`ids/${ts}-${idFile.name}`).data.publicUrl;
 
             // SAVE TO DATABASE
             btn.innerText = "Saving Data...";
             applicationData.status = 'Pending';
             applicationData.id_type = idType;
-            await _supabase.from('applicants').insert([applicationData]);
+            
+            const { error: insertErr } = await _supabase.from('applicants').insert([applicationData]);
+            if (insertErr) throw insertErr;
 
             alert("Application Submitted Successfully!");
             localStorage.removeItem('applicationData');
