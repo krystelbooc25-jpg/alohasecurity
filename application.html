@@ -123,7 +123,7 @@
                 </div>
             </form>
 
-            <div id="offline-overlay">
+            <div id="offline-overlay" style="display: none;">
                 <div>
                     <h1>You are Offline</h1>
                     <p>Please check your internet connection.</p>
@@ -134,6 +134,7 @@
                 <button type="button" class="btn btn-secondary" disabled>
                     <i class="fas fa-arrow-left"></i> Previous
                 </button>
+                <!-- Form button inside footer linked to form ID -->
                 <button type="submit" form="step1-form" class="btn btn-primary">Continue</button>
             </footer>
         </main>
@@ -142,34 +143,45 @@
     <script>
         // --- 1. INITIALIZE MODERN CALENDAR (Flatpickr) ---
         const dobPicker = flatpickr("#dob", {
-            dateFormat: "Y-m-d",      // Ito ang format na ise-save sa Database
-            altInput: true,           // Ito ang magandang format na makikita ng tao
-            altFormat: "F j, Y",      // Example: January 11, 2026
-            maxDate: "today",         // Bawal ang future date sa birthday
-            disableMobile: "true",    // Pinipilit ang Flatpickr theme kahit sa mobile phone
+            dateFormat: "Y-m-d",      
+            altInput: true,           
+            altFormat: "F j, Y",      
+            maxDate: "today",         
+            disableMobile: true, // Fixed: changed "true" to true
             animate: true
         });
 
         // --- 2. LOAD DATA FROM STORAGE ---
-        const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
+        let applicationData = {};
+        try {
+            const savedData = localStorage.getItem('applicationData');
+            if (savedData) {
+                applicationData = JSON.parse(savedData);
+            }
+        } catch (e) {
+            console.error("Error loading data", e);
+        }
 
-        document.getElementById('first-name').value = applicationData.first_name || '';
-        document.getElementById('last-name').value = applicationData.last_name || '';
-        document.getElementById('email').value = applicationData.email || '';
-        document.getElementById('phone').value = applicationData.phone || '';
-        document.getElementById('street-address').value = applicationData.street_address || '';
-        document.getElementById('city').value = applicationData.city || '';
-        document.getElementById('zip-code').value = applicationData.zip_code || '';
-        
-        // Load saved Date of Birth into the picker
-        if (applicationData.dob) {
-            dobPicker.setDate(applicationData.dob);
+        // Populate fields if data exists
+        if (applicationData) {
+            document.getElementById('first-name').value = applicationData.first_name || '';
+            document.getElementById('last-name').value = applicationData.last_name || '';
+            document.getElementById('email').value = applicationData.email || '';
+            document.getElementById('phone').value = applicationData.phone || '';
+            document.getElementById('street-address').value = applicationData.street_address || '';
+            document.getElementById('city').value = applicationData.city || '';
+            document.getElementById('zip-code').value = applicationData.zip_code || '';
+            
+            if (applicationData.dob) {
+                dobPicker.setDate(applicationData.dob);
+            }
         }
 
         // --- 3. SAVE DATA ON SUBMIT ---
         document.getElementById('step1-form').addEventListener('submit', function(event) {
             event.preventDefault();
 
+            // Store values in the object
             applicationData.first_name = document.getElementById('first-name').value;
             applicationData.last_name = document.getElementById('last-name').value;
             applicationData.email = document.getElementById('email').value;
@@ -177,16 +189,21 @@
             applicationData.street_address = document.getElementById('street-address').value;
             applicationData.city = document.getElementById('city').value;
             applicationData.zip_code = document.getElementById('zip-code').value;
-            applicationData.dob = document.getElementById('dob').value; // YYYY-MM-DD
+            applicationData.dob = document.getElementById('dob').value; 
 
+            // Save to local storage
             localStorage.setItem('applicationData', JSON.stringify(applicationData));
+            
+            // Go to next page
             window.location.href = 'application2.html';
         });
 
         // --- 4. OFFLINE OVERLAY ---
         const offlineOverlay = document.getElementById('offline-overlay');
         function updateOnlineStatus() {
-            offlineOverlay.style.display = navigator.onLine ? 'none' : 'flex';
+            if (offlineOverlay) {
+                offlineOverlay.style.display = navigator.onLine ? 'none' : 'flex';
+            }
         }
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);

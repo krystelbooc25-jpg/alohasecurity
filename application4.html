@@ -51,7 +51,6 @@
             margin-bottom: 15px;
         }
 
-        /* Success Green Color */
         .modal-icon.success-icon { color: #28a745; }
 
         .modal-box h2 {
@@ -156,25 +155,19 @@
     document.getElementById('summary-email').innerText = applicationData.email || 'N/A';
     document.getElementById('summary-position').innerText = applicationData.desired_position || 'N/A';
 
-    // COOL MODAL LOGIC
     function showModal(title, msg, iconClass = "fa-exclamation-circle") {
         document.getElementById('modal-title').innerText = title;
         document.getElementById('modal-msg').innerText = msg;
         const iconDiv = document.getElementById('modal-icon-div');
         iconDiv.innerHTML = `<i class="fas ${iconClass}"></i>`;
-        
-        if (title === "Success") {
-            iconDiv.classList.add('success-icon');
-        } else {
-            iconDiv.classList.remove('success-icon');
-        }
+        if (title === "Success") { iconDiv.classList.add('success-icon'); } 
+        else { iconDiv.classList.remove('success-icon'); }
         document.getElementById('duplicate-modal').classList.add('active');
     }
 
     function closeModal() {
         const title = document.getElementById('modal-title').innerText;
         document.getElementById('duplicate-modal').classList.remove('active');
-        // Redirect only if application was successful
         if (title === "Success") {
             window.location.href = 'index.html';
         }
@@ -186,16 +179,14 @@
         const idType = document.getElementById('id-type').value;
 
         btn.disabled = true;
-        btn.innerText = "Processing...";
+        btn.innerText = "Checking Application...";
 
         try {
             // 1. AGE CHECK (21+)
             const birthDate = new Date(applicationData.dob);
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
-            if (today.getMonth() < birthDate.getMonth() || (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
+            if (today.getMonth() < birthDate.getMonth() || (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) { age--; }
             if (age < 21) {
                 btn.disabled = false;
                 btn.innerText = "Submit Application";
@@ -203,14 +194,16 @@
                 return;
             }
 
-            // 2. STRICT DUPLICATE CHECK (Using .ilike for case-insensitivity)
+            // 2. STRICT DUPLICATE CHECK (Check ANY Status: Pending, Approved, or Rejected)
+            // Nilagyan ng .trim() para burahin ang spaces at .ilike para case-insensitive (Juan vs juan)
+            const cleanFName = applicationData.first_name.trim();
+            const cleanLName = applicationData.last_name.trim();
+            const cleanEmail = applicationData.email.trim();
+
             const { data: dup, error: nameErr } = await _supabase
                 .from('applicants')
                 .select('id')
-                .ilike('first_name', applicationData.first_name.trim())
-                .ilike('last_name', applicationData.last_name.trim())
-                .eq('dob', applicationData.dob)
-                .ilike('email', applicationData.email.trim())
+                .or(`and(first_name.ilike.${cleanFName},last_name.ilike.${cleanLName},dob.eq.${applicationData.dob}),email.ilike.${cleanEmail}`)
                 .limit(1);
 
             if (nameErr) throw nameErr;
@@ -218,7 +211,7 @@
             if (dup && dup.length > 0) {
                 btn.disabled = false;
                 btn.innerText = "Submit Application";
-                showModal("Record Exists", "Our system shows that you have already submitted an application. Multiple submissions are not allowed."); 
+                showModal("Record Exists", "Our system shows that an application with this name and birthday (or email) already exists. Re-application is not allowed."); 
                 return;
             }
 
@@ -244,28 +237,19 @@
             const { error: insertErr } = await _supabase.from('applicants').insert([applicationData]);
             if (insertErr) throw insertErr;
 
-            // 5. TRIGGER EMAIL NOTIFICATION
+            // Trigger Email Notification
             try {
-                console.log("Triggering email notification...");
                 await _supabase.functions.invoke('send-email', {
-                    body: {
-                        applicant_name: applicationData.first_name + " " + applicationData.last_name,
-                        applicant_email: applicationData.email,
-                        position: applicationData.desired_position
-                    }
+                    body: { applicant_name: applicationData.first_name, applicant_email: applicationData.email, position: applicationData.desired_position }
                 });
-            } catch (emailErr) {
-                console.error("Email notification failed to trigger:", emailErr);
-            }
+            } catch (emailErr) { console.error("Email failed", emailErr); }
 
-            // FINISH
             localStorage.removeItem('applicationData');
-            showModal("Success", "Application Submitted Successfully! Our HR team will contact you shortly.", "fa-check-circle");
+            showModal("Success", "Application Submitted Successfully! Our team will contact you soon.", "fa-check-circle");
 
         } catch (error) {
             btn.disabled = false;
             btn.innerText = "Submit Application";
-            console.error(error);
             showModal("Error", "Error: " + error.message, "fa-times-circle");
         }
     };
