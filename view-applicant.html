@@ -3,241 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Applicant Details - Aloha Security</title>
+    <title>View Details - Aloha Security</title>
     <link rel="stylesheet" href="view-applicant.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Pinagandang style para sa Admin Actions at Modal */
+        :root {
+            --primary-red: #D2042D;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #1a1a1a;
+        }
+
+        body.dark-mode {
+            --bg-color: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --text-main: #f0f0f0;
+        }
+
+        /* Admin Action Buttons */
         .admin-actions {
             margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
+            padding: 25px;
+            background: rgba(210, 4, 45, 0.05);
+            border-radius: 12px;
             display: flex;
             justify-content: flex-end;
             gap: 15px;
-            border: 1px solid #eee;
+            border: 1px solid var(--primary-red);
         }
-        .btn-approve { background: #2ecc71 !important; color: white !important; border: none; cursor: pointer; transition: 0.3s; }
-        .btn-reject { background: #e74c3c !important; color: white !important; border: none; cursor: pointer; transition: 0.3s; }
-        .btn-approve:hover, .btn-reject:hover { opacity: 0.8; transform: translateY(-2px); }
-        .btn-approve:disabled { background: #ccc !important; cursor: not-allowed; }
-        
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .branch-select { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
 
-        .id-image-container {
-            margin-top: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            max-width: 450px;
-            background: #f0f0f0;
+        .btn-approve { background: #2ecc71 !important; color: white !important; }
+        .btn-reject { background: #e74c3c !important; color: white !important; }
+        
+        /* Modal Styling */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.85); 
+            z-index: 2000; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px;
         }
-        .id-image-container img {
+        .modal-content { 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 15px; 
+            width: 100%; 
+            max-width: 400px; 
+            text-align: center; 
+            color: var(--text-main);
+        }
+
+        .branch-select { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 20px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .id-img {
             width: 100%;
-            display: block;
+            max-width: 500px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
             cursor: pointer;
             transition: 0.3s;
         }
-        .id-image-container img:hover { opacity: 0.9; }
-        .doc-label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; white-space: pre-wrap; font-family: inherit; font-size: 14px; border: 1px solid #eee; }
-        
-        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        @media (max-width: 600px) { .grid-layout { grid-template-columns: 1fr; } }
+        .id-img:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
+
     <div class="container">
         <header class="page-header">
-            <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
-            <h1>Applicant Profile</h1>
+            <div class="header-left">
+                <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Dashboard</a>
+                <h1>Applicant Details</h1>
+            </div>
         </header>
 
         <div class="applicant-card">
             <div class="card-header">
                 <div class="profile-info">
-                    <div class="avatar"><i class="fas fa-user"></i></div>
+                    <div class="avatar"><i class="fas fa-user-shield"></i></div>
                     <div>
-                        <h2 id="applicant-name">Loading...</h2>
-                        <p id="applicant-position-main">Applying for: Loading...</p>
+                        <h2 id="display-name">Loading...</h2>
+                        <p id="display-pos">Position: Loading...</p>
                     </div>
                 </div>
                 <div class="action-buttons">
-                    <a id="download-resume-btn" href="#" target="_blank" class="btn btn-secondary"><i class="fas fa-file-pdf"></i> View Resume/CV</a>
+                    <a id="resume-link" href="#" target="_blank" class="btn btn-secondary"><i class="fas fa-file-pdf"></i> View Resume</a>
                 </div>
             </div>
 
             <div class="card-body">
-                <!-- PERSONAL INFO -->
+                <!-- Data Grid -->
                 <div class="detail-section">
-                    <h3><i class="fas fa-info-circle"></i> Personal Information</h3>
+                    <h3><i class="fas fa-info-circle"></i> Profile Information</h3>
                     <div class="grid-layout">
-                        <p><strong>Email:</strong> <span id="applicant-email"></span></p>
-                        <p><strong>Phone:</strong> <span id="applicant-phone"></span></p>
-                        <p><strong>Address:</strong> <span id="applicant-address"></span></p>
-                        <p><strong>Date of Birth:</strong> <span id="applicant-dob"></span></p>
+                        <p><strong>Email:</strong> <span id="app-email"></span></p>
+                        <p><strong>Phone:</strong> <span id="app-phone"></span></p>
+                        <p><strong>Birthday:</strong> <span id="app-dob"></span></p>
+                        <p><strong>Salary:</strong> <span id="app-salary"></span></p>
                     </div>
                 </div>
 
-                <!-- POSITION DETAILS -->
                 <div class="detail-section">
-                    <h3><i class="fas fa-briefcase"></i> Position Details</h3>
-                    <div class="grid-layout">
-                        <p><strong>Desired Position:</strong> <span id="applicant-position"></span></p>
-                        <p><strong>Availability:</strong> <span id="applicant-availability"></span></p>
-                        <p><strong>Expected Start:</strong> <span id="applicant-start"></span></p>
-                        <p><strong>Salary Range:</strong> <span id="applicant-salary"></span></p>
-                        <p><strong>Driver's License:</strong> <span id="applicant-license"></span></p>
-                        <p><strong>Transportation:</strong> <span id="applicant-transport"></span></p>
-                    </div>
+                    <h3><i class="fas fa-id-card"></i> Documents</h3>
+                    <p><strong>ID Type:</strong> <span id="app-id-type"></span></p>
+                    <img id="app-id-img" src="" alt="ID Photo" class="id-img" onclick="window.open(this.src)">
                 </div>
 
-                <!-- EXPERIENCE -->
                 <div class="detail-section">
-                    <h3><i class="fas fa-history"></i> Experience & Background</h3>
-                    <p><strong>Security Experience:</strong></p>
-                    <pre id="applicant-experience"></pre>
-                    <p><strong>Education Background:</strong></p>
-                    <pre id="applicant-education"></pre>
-                    <p><strong>Professional References:</strong></p>
-                    <pre id="applicant-refs"></pre>
+                    <h3><i class="fas fa-history"></i> Experience</h3>
+                    <pre id="app-exp"></pre>
                 </div>
 
-                <!-- DOCUMENTS -->
-                <div class="detail-section">
-                    <h3><i class="fas fa-id-card"></i> Submitted Documents</h3>
-                    <div>
-                        <span class="doc-label">Type of ID: <span id="id-type-label" style="color: #D2042D;"></span></span>
-                        <div class="id-image-container">
-                            <img id="applicant-id-photo" src="https://via.placeholder.com/450x250?text=No+ID+Uploaded" alt="Valid ID" title="Click to view full image" onclick="window.open(this.src)">
-                        </div>
-                        <small style="color: #888;">(Click the image above to view it in full size)</small>
-                    </div>
-                </div>
-
-                <!-- ADMIN ACTIONS -->
+                <!-- ADMIN BUTTONS -->
                 <div class="admin-actions">
-                    <button class="btn btn-reject" onclick="processStatus('Rejected')"><i class="fas fa-times"></i> Reject Applicant</button>
-                    <button class="btn btn-approve" onclick="openAssignModal()"><i class="fas fa-check"></i> Approve & Deploy</button>
+                    <button class="btn btn-reject" onclick="updateStatus('Rejected')"><i class="fas fa-times"></i> Reject</button>
+                    <button class="btn btn-approve" onclick="openModal()"><i class="fas fa-check"></i> Approve & Deploy</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ASSIGNMENT MODAL -->
+    <!-- MODAL -->
     <div class="modal" id="assignModal">
         <div class="modal-content">
-            <h3 style="color: #D2042D;"><i class="fas fa-map-marker-alt"></i> Assign Deployment</h3>
-            <p>Pumili ng branch kung saan ia-assign ang guard na ito:</p>
-            <select id="branch-dropdown" class="branch-select">
-                <option value="">-- Pumili ng Lugar --</option>
+            <h2 style="color: var(--primary-red);">Assign Branch</h2>
+            <p>Select location for deployment:</p>
+            <select id="branch-input" class="branch-select">
+                <option value="">-- Select Branch --</option>
                 <option value="Manila Main">Manila Main</option>
                 <option value="Quezon City">Quezon City</option>
                 <option value="Makati Hub">Makati Hub</option>
                 <option value="Davao Branch">Davao Branch</option>
                 <option value="Cebu Office">Cebu Office</option>
             </select>
-            <button class="btn btn-primary btn-approve" style="width: 100%; padding: 12px; border-radius: 8px; font-weight: bold;" onclick="confirmApproval()">Confirm & Deploy</button>
-            <p onclick="closeModal()" style="margin-top:15px; cursor:pointer; color:#999; font-size: 14px;">Cancel</p>
+            <button class="btn btn-primary" style="width:100%;" onclick="confirmApproval()">Confirm Deployment</button>
+            <p style="margin-top:15px; cursor:pointer; color:#888;" onclick="closeModal()">Cancel</p>
         </div>
     </div>
 
     <script>
-    // 1. INITIALIZE SUPABASE
-    const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
-    const { createClient } = supabase;
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+        // 1. SUPABASE INIT
+        const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 2. GET ID FROM URL (Global)
-    const urlParams = new URLSearchParams(window.location.search);
-    const applicantId = urlParams.get('id');
+        // 2. GET ID FROM URL
+        const params = new URLSearchParams(window.location.search);
+        const applicantId = params.get('id');
 
-    async function loadApplicantDetails() {
-        if (!applicantId) {
-            alert("Mali: Walang ID na nahanap sa URL.");
-            return;
+        // Check if Dark Mode is active from Dashboard
+        if (localStorage.getItem('admin-theme') === 'dark') document.body.classList.add('dark-mode');
+
+        async function loadDetails() {
+            if (!applicantId) return alert("Error: No ID found");
+
+            const { data: app, error } = await _supabase.from('applicants').select('*').eq('id', applicantId).single();
+            if (error) return console.error(error);
+
+            // Populate UI
+            document.getElementById('display-name').innerText = app.first_name + " " + app.last_name;
+            document.getElementById('display-pos').innerText = "Applying for: " + (app.desired_position || 'Guard');
+            document.getElementById('app-email').innerText = app.email;
+            document.getElementById('app-phone').innerText = app.phone;
+            document.getElementById('app-dob').innerText = app.dob;
+            document.getElementById('app-salary').innerText = app.salary_range || 'N/A';
+            document.getElementById('app-id-type').innerText = app.id_type || 'None';
+            document.getElementById('app-exp').innerText = app.security_experience || 'No experience listed.';
+            
+            if (app.resume_url) document.getElementById('resume-link').href = app.resume_url;
+            if (app.valid_id_url) document.getElementById('app-id-img').src = app.valid_id_url;
         }
 
-        const { data: app, error } = await supabaseClient
-            .from('applicants')
-            .select('*')
-            .eq('id', applicantId)
-            .single();
+        // 3. ACTION FUNCTIONS
+        async function updateStatus(newStatus) {
+            if (!confirm(`Are you sure you want to mark this as ${newStatus}?`)) return;
 
-        if (error) {
-            console.error("Fetch Error:", error);
-            return;
+            const { error } = await _supabase.from('applicants').update({ status: newStatus }).eq('id', applicantId);
+            
+            if (error) {
+                alert("Update failed: " + error.message);
+            } else {
+                alert("Applicant " + newStatus);
+                window.location.href = 'dashboard.html';
+            }
         }
 
-        // Populate Data
-        document.getElementById('applicant-name').textContent = app.first_name + " " + app.last_name;
-        document.getElementById('applicant-email').textContent = app.email;
-        document.getElementById('applicant-phone').textContent = app.phone;
-        document.getElementById('applicant-address').textContent = app.street_address || 'N/A';
-        document.getElementById('applicant-dob').textContent = app.dob;
-        document.getElementById('applicant-position-main').textContent = "Applying for: " + (app.desired_position || 'Guard');
-        document.getElementById('applicant-position').textContent = app.desired_position || 'N/A';
-        document.getElementById('applicant-experience').textContent = app.security_experience || 'None';
-        document.getElementById('id-type-label').textContent = app.id_type || 'N/A';
-        
-        if (app.resume_url) document.getElementById('download-resume-btn').href = app.resume_url;
-        if (app.valid_id_url) document.getElementById('applicant-id-photo').src = app.valid_id_url;
-    }
+        async function confirmApproval() {
+            const branch = document.getElementById('branch-input').value;
+            if (!branch) return alert("Please select a branch first.");
 
-    // MODAL CONTROLS
-    function openAssignModal() { document.getElementById('assignModal').style.display = 'flex'; }
-    function closeModal() { document.getElementById('assignModal').style.display = 'none'; }
+            const { error } = await _supabase.from('applicants').update({ 
+                status: 'Approved', 
+                assigned_branch: branch 
+            }).eq('id', applicantId);
 
-    // --- ANG PINAKA-IMPORTANTENG FUNCTION ---
-    async function confirmApproval() {
-        const selectedBranch = document.getElementById('branch-dropdown').value;
-        if (!selectedBranch) {
-            alert("Pumili muna ng branch.");
-            return;
+            if (error) {
+                alert("Error: " + error.message);
+            } else {
+                alert("Deployment Successful!");
+                window.location.href = 'dashboard.html';
+            }
         }
 
-        const btn = document.querySelector('#assignModal .btn-primary');
-        btn.disabled = true;
-        btn.innerText = "Saving to Database...";
+        // Modal Controls
+        function openModal() { document.getElementById('assignModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('assignModal').style.display = 'none'; }
 
-        console.log("Attempting to update ID:", applicantId);
-
-        // UPDATE COMMAND
-        const { data, error } = await supabaseClient
-            .from('applicants')
-            .update({ 
-                status: 'Approved',
-                assigned_branch: selectedBranch 
-            })
-            .eq('id', applicantId)
-            .select(); // Mahalaga ito para ma-confirm ang update
-
-        if (error) {
-            alert("Update Failed: " + error.message);
-            console.error(error);
-            btn.disabled = false;
-            btn.innerText = "Confirm & Deploy";
-        } else {
-            console.log("Update Success:", data);
-            alert("Tagumpay! Approved na si " + document.getElementById('applicant-name').textContent);
-            window.location.href = 'dashboard.html';
-        }
-    }
-
-    // ACTION: REJECT
-    async function processStatus(status) {
-        if(!confirm("Sigurado ka ba?")) return;
-        const { error } = await supabaseClient.from('applicants').update({ status: status }).eq('id', applicantId);
-        if (error) alert(error.message);
-        else window.location.href = 'dashboard.html';
-    }
-
-    document.addEventListener('DOMContentLoaded', loadApplicantDetails);
-</script>
+        loadDetails();
+    </script>
 </body>
 </html>
