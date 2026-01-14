@@ -156,7 +156,7 @@
     document.getElementById('summary-email').innerText = applicationData.email || 'N/A';
     document.getElementById('summary-position').innerText = applicationData.desired_position || 'N/A';
 
-    // Enhanced Show Custom Modal
+    // Show Custom Modal
     function showModal(title, msg, iconClass = "fa-exclamation-circle") {
         document.getElementById('modal-title').innerText = title;
         document.getElementById('modal-msg').innerText = msg;
@@ -173,6 +173,7 @@
         document.getElementById('duplicate-modal').classList.add('active');
     }
 
+    // Close Modal and Handle Redirect
     function closeModal() {
         const title = document.getElementById('modal-title').innerText;
         document.getElementById('duplicate-modal').classList.remove('active');
@@ -190,12 +191,11 @@
         btn.innerText = "Processing...";
 
         try {
-            // --- AGE REQUIREMENT CHECK (21+) ---
+            // 1. AGE REQUIREMENT CHECK (21+)
             const birthDate = new Date(applicationData.dob);
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            if (today.getMonth() < birthDate.getMonth() || (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
                 age--;
             }
             if (age < 21) {
@@ -205,14 +205,14 @@
                 return;
             }
 
-            // --- STRICT DUPLICATE CHECK (NAME + BIRTHDAY + EMAIL) ---
+            // 2. STRICT DUPLICATE CHECK (.ilike for case-insensitivity)
             const { data: dup, error: nameErr } = await _supabase
                 .from('applicants')
                 .select('id')
-                .eq('first_name', applicationData.first_name)
-                .eq('last_name', applicationData.last_name)
+                .ilike('first_name', applicationData.first_name.trim())
+                .ilike('last_name', applicationData.last_name.trim())
                 .eq('dob', applicationData.dob)
-                .eq('email', applicationData.email) // Sinama ang email sa filter
+                .ilike('email', applicationData.email.trim())
                 .limit(1);
 
             if (nameErr) throw nameErr;
@@ -224,7 +224,7 @@
                 return;
             }
 
-            // UPLOADING FILES
+            // 3. UPLOADING FILES
             btn.innerText = "Uploading Files...";
             const resumeFile = document.getElementById('resume-cv').files[0];
             const idFile = document.getElementById('valid-id').files[0];
@@ -238,7 +238,7 @@
             if (iErr) throw iErr;
             applicationData.valid_id_url = _supabase.storage.from('applicant-files').getPublicUrl(`ids/${ts}-${idFile.name}`).data.publicUrl;
 
-            // SAVE TO DATABASE
+            // 4. SAVE TO DATABASE
             btn.innerText = "Saving Data...";
             applicationData.status = 'Pending';
             applicationData.id_type = idType;
@@ -247,12 +247,13 @@
             if (insertErr) throw insertErr;
 
             localStorage.removeItem('applicationData');
-            showModal("Success", "Application Submitted Successfully!", "fa-check-circle");
+            showModal("Success", "Application Submitted Successfully! Please wait for our team to contact you.", "fa-check-circle");
 
         } catch (error) {
             btn.disabled = false;
             btn.innerText = "Submit Application";
-            showModal("Error", "Error: " + error.message, "fa-times-circle");
+            console.error(error);
+            showModal("Error", "Something went wrong: " + error.message, "fa-times-circle");
         }
     };
    </script>
