@@ -110,7 +110,10 @@
         .btn-view { background: #eef2f7; color: #3498db; }
         .btn-view:hover { background: #3498db; color: white; }
 
-        /* --- BRANCH ACCORDIONS (FIXED) --- */
+        .btn-add { background: var(--primary-red); color: white; padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-add:hover { background: var(--active-red); transform: translateY(-2px); }
+
+        /* --- BRANCH ACCORDIONS --- */
         .branch-accordion { margin-bottom: 15px; border-radius: 10px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.04); border: 1px solid #eee; }
         .accordion-header { 
             padding: 18px 25px; background: white; display: flex; justify-content: space-between; 
@@ -145,6 +148,11 @@
         .btn-confirm { background: var(--primary-red); color: white; }
         .btn-cancel { background: #eee; color: #555; }
 
+        /* Manual Add Form Styling */
+        .form-group { text-align: left; margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: #555; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
+
         .hidden { display: none; }
 
         /* --- CHARTS WRAPPER --- */
@@ -154,7 +162,7 @@
 </head>
 <body>
 
-    <!-- CUSTOM MODAL -->
+    <!-- CUSTOM MODAL (DELETE/UNASSIGN) -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-box">
             <div id="modalIcon" class="modal-icon"><i class="fas fa-exclamation-circle"></i></div>
@@ -167,9 +175,46 @@
         </div>
     </div>
 
+    <!-- MANUAL ADD EMPLOYEE MODAL -->
+    <div id="manualAddModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="margin-bottom: 20px; color: var(--primary-red);">Add New Employee</h2>
+            <div class="form-group">
+                <label>First Name</label>
+                <input type="text" id="m_first_name" placeholder="Enter first name">
+            </div>
+            <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" id="m_last_name" placeholder="Enter last name">
+            </div>
+            <div class="form-group">
+                <label>Desired Position</label>
+                <select id="m_position">
+                    <option value="Security Guard">Security Guard</option>
+                    <option value="Security Supervisor">Security Supervisor</option>
+                    <option value="Mobile Patrol">Mobile Patrol</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Assign to Branch</label>
+                <select id="m_branch">
+                    <option value="">No branch (Pending)</option>
+                    <option value="Manila Main">Manila Main</option>
+                    <option value="Quezon City">Quezon City</option>
+                    <option value="Makati Hub">Makati Hub</option>
+                    <option value="Davao Branch">Davao Branch</option>
+                    <option value="Cebu Office">Cebu Office</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <button onclick="closeManualAdd()" class="modal-btn btn-cancel">Cancel</button>
+                <button onclick="saveManualEmployee()" class="modal-btn btn-confirm">Save Employee</button>
+            </div>
+        </div>
+    </div>
+
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
-            <!-- Note: Ensure the path to logo.jpg is correct -->
             <img src="Resources/logo.jpg" alt="Logo">
             <h2 style="margin-top: 15px; font-size: 1.2rem; letter-spacing: 1px;">ALOHA</h2>
         </div>
@@ -218,7 +263,10 @@
             <section id="applicants-tab" class="hidden">
                 <div class="card">
                     <div style="padding: 20px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                        <h4 style="color: #444;">All Applicants</h4>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <h4 style="color: #444;">All Applicants</h4>
+                            <button class="btn-add" onclick="openManualAdd()"><i class="fas fa-plus"></i> Manual Add</button>
+                        </div>
                         <div style="position: relative;">
                             <i class="fas fa-search" style="position: absolute; left: 12px; top: 12px; color: #aaa;"></i>
                             <input type="text" placeholder="Search by name..." oninput="filterTable(this.value)" 
@@ -318,6 +366,36 @@
                 </div>
             `;
         }).join('');
+    }
+
+    // --- MANUAL ADD LOGIC ---
+    function openManualAdd() { document.getElementById('manualAddModal').classList.add('active'); }
+    function closeManualAdd() { document.getElementById('manualAddModal').classList.remove('active'); }
+
+    async function saveManualEmployee() {
+        const fname = document.getElementById('m_first_name').value;
+        const lname = document.getElementById('m_last_name').value;
+        const pos = document.getElementById('m_position').value;
+        const branch = document.getElementById('m_branch').value;
+
+        if(!fname || !lname) return alert("Please fill in the name fields.");
+
+        const { error } = await _supabase.from('applicants').insert([{
+            first_name: fname,
+            last_name: lname,
+            desired_position: pos,
+            assigned_branch: branch || null,
+            status: branch ? 'Approved' : 'Pending'
+        }]);
+
+        if (error) {
+            alert("Error saving employee: " + error.message);
+        } else {
+            document.getElementById('m_first_name').value = '';
+            document.getElementById('m_last_name').value = '';
+            closeManualAdd();
+            fetchData(); // Refresh everything
+        }
     }
 
     // --- LOGIC FUNCTIONS ---
