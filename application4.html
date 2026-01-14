@@ -78,6 +78,7 @@
     // 2. LOAD DATA
     if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
     const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
+    
     document.getElementById('summary-name').innerText = `${applicationData.first_name || ''} ${applicationData.last_name || ''}`;
     document.getElementById('summary-email').innerText = applicationData.email || 'N/A';
     document.getElementById('summary-position').innerText = applicationData.desired_position || 'N/A';
@@ -91,44 +92,92 @@
         if (!idType) return alert("Pumili ng ID Type.");
         
         btn.disabled = true;
-        btn.innerText = "Processing...";
+        btn.innerText = "Checking Application...";
 
         try {
-            console.log("Checking duplicates...");
-            const { data: existing, error: fetchErr } = await _supabase.from('applicants').select('status, created_at').eq('email', applicationData.email).order('created_at', { ascending: false }).limit(1);
-            if (fetchErr) throw new Error("Duplicate Check Error: " + fetchErr.message);
+            // --- NEW: CHECK FOR DUPLICATE NAME AND BIRTHDAY ---
+            console.log("Checking for duplicate identity...");
+            const { data: duplicateName, error: nameErr } = await _supabase
+                .from('applicants')
+                .select('id, created_at')
+                .eq('first_name', applicationData.first_name)
+                .eq('last_name', applicationData.last_name)
+                .eq('dob', applicationData.dob)
+                .limit(1);
 
-            if (existing && existing.length > 0) {
-                if (existing[0].status !== 'Rejected') throw new Error("May active application ka na.");
-                const months = Math.abs(new Date() - new Date(existing[0].created_at)) / (1000 * 60 * 60 * 24 * 30.44);
-                if (months < 3) throw new Error("Mag-antay ng 3 months bago mag-apply uli.");
+            if (nameErr) throw new Error("Database check error: " + nameErr.message);
+
+            if (duplicateName && duplicateName.length > 0) {
+                btn.disabled = false;
+                btn.innerText = "Submit Application";
+                return alert("Paumanhin, ang pangalan at birthday na ito ay may record na sa aming system. Hindi na maaring mag-apply muli.");
             }
 
+            // --- CHECK FOR DUPLICATE EMAIL ---
+            console.log("Checking email...");
+            const { data: existingEmail, error: fetchErr } = await _supabase
+                .from('applicants')
+                .select('status, created_at')
+                .eq('email', applicationData.email)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (fetchErr) throw new Error("Duplicate Check Error: " + fetchErr.message);
+
+            if (existingEmail && existingEmail.length > 0) {
+                if (existingEmail[0].status !== 'Rejected') {
+                    btn.disabled = false;
+                    btn.innerText = "Submit Application";
+                    return alert("May active application ka na gamit ang email na ito.");
+                }
+                const months = Math.abs(new Date() - new Date(existingEmail[0].created_at)) / (1000 * 60 * 60 * 24 * 30.44);
+                if (months < 3) {
+                    btn.disabled = false;
+                    btn.innerText = "Submit Application";
+                    return alert("Kailangan mag-antay ng 3 months bago mag-apply uli gamit ang email na ito.");
+                }
+            }
+
+            // --- UPLOADING FILES ---
             console.log("Uploading files...");
+            btn.innerText = "Uploading Files...";
             const resumeFile = document.getElementById('resume-cv').files[0];
             const idFile = document.getElementById('valid-id').files[0];
             if (!resumeFile || !idFile) throw new Error("Pakipili uli ang Resume at ID Photo.");
 
             const ts = Date.now();
+            
+            // Upload Resume
             const { error: rErr } = await _supabase.storage.from('applicant-files').upload(`resumes/${ts}-${resumeFile.name}`, resumeFile);
             if (rErr) throw new Error("Resume Upload Error: " + rErr.message);
             applicationData.resume_url = _supabase.storage.from('applicant-files').getPublicUrl(`resumes/${ts}-${resumeFile.name}`).data.publicUrl;
 
+            // Upload ID
             const { error: iErr } = await _supabase.storage.from('applicant-files').upload(`ids/${ts}-${idFile.name}`, idFile);
             if (iErr) throw new Error("ID Upload Error: " + iErr.message);
             applicationData.valid_id_url = _supabase.storage.from('applicant-files').getPublicUrl(`ids/${ts}-${idFile.name}`).data.publicUrl;
 
+            // --- SAVING TO DATABASE ---
             console.log("Saving to DB...");
+            btn.innerText = "Saving to Database...";
             applicationData.status = 'Pending';
-            applicationData.id_type = idType; // Eto yung bago
+            applicationData.id_type = idType;
 
             const { error: insErr } = await _supabase.from('applicants').insert([applicationData]);
-            if (insErr) throw new Error("Database Save Error: " + insErr.message + " (Siguraduhin na nagdagdag ka ng id_type column sa Supabase)");
+            if (insErr) throw new Error("Database Save Error: " + insErr.message);
 
-            console.log("Triggering email...");
-            try { await _supabase.functions.invoke('send-email', { body: { applicant_name: applicationData.first_name, applicant_email: applicationData.email, position: applicationData.desired_position } }); } catch (m) {}
+            // Optional: Trigger Email Notification
+            try { 
+                await _supabase.functions.invoke('send-email', { 
+                    body: { 
+                        applicant_name: applicationData.first_name, 
+                        applicant_email: applicationData.email, 
+                        position: applicationData.desired_position 
+                    } 
+                }); 
+            } catch (m) { console.log("Email function skipped or failed."); }
 
-            alert("Application Submitted!");
+            alert("Application Submitted Successfully!");
             localStorage.removeItem('applicationData');
             window.location.href = 'index.html';
 
