@@ -1,32 +1,49 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-console.log("Hello from Functions!")
-
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
+serve(async (req) => {
+  // Handle CORS pre-flight request
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
+  try {
+    const { applicant_name, applicant_email, position } = await req.json()
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: 'Aloha Security <onboarding@resend.dev>',
+        to: ['krystelbooc25@gmail.com'], 
+        subject: `New Application: ${applicant_name}`,
+        html: `
+          <h2>New Job Application Received</h2>
+          <p><strong>Name:</strong> ${applicant_name}</p>
+          <p><strong>Applicant Email:</strong> ${applicant_email}</p>
+          <p><strong>Position Applied:</strong> ${position}</p>
+        `,
+      }),
+    })
+
+    const data = await res.json()
+
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 })
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/send-email' \
-    --header 'Authorization: Bearer eyJhbGciOiJFUzI1NiIsImtpZCI6ImI4MTI2OWYxLTIxZDgtNGYyZS1iNzE5LWMyMjQwYTg0MGQ5MCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjIwODM3NjcyOTF9.kFPNzzjYOozOkY8tLrcktd4L9tgqQp-DkWO1H7jzg5QoGBEpmctnNn-zwo8xtlIbpT5DZRJgnNxCaKYE7iwJwQ' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/

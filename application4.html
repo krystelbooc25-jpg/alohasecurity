@@ -181,7 +181,7 @@
         btn.innerText = "Processing...";
 
         try {
-            // 1. AGE CHECK
+            // 1. AGE REQUIREMENT CHECK (21+)
             const birthDate = new Date(applicationData.dob);
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
@@ -195,7 +195,8 @@
                 return;
             }
 
-            // 2. DUPLICATE CHECK
+            // 2. STRICT DUPLICATE CHECK (Check kahit ano pa ang Status)
+            // Hahanapin natin kung may kaparehong First Name, Last Name, Birthday, AT Email.
             const { data: dup, error: nameErr } = await _supabase
                 .from('applicants')
                 .select('id')
@@ -207,14 +208,15 @@
 
             if (nameErr) throw nameErr;
 
+            // Kung may nakitang kahit isang row, ibig sabihin bawal na siya
             if (dup && dup.length > 0) {
                 btn.disabled = false;
                 btn.innerText = "Submit Application";
-                showModal("Record Exists", "Our records show that you have already submitted an application. Multiple submissions are not allowed."); 
+                showModal("Record Exists", "Our system shows that you have already submitted an application with these details. Re-application is not permitted."); 
                 return;
             }
 
-            // 3. UPLOADING
+            // 3. UPLOADING FILES
             btn.innerText = "Uploading Files...";
             const resumeFile = document.getElementById('resume-cv').files[0];
             const idFile = document.getElementById('valid-id').files[0];
@@ -228,7 +230,7 @@
             if (iErr) throw iErr;
             applicationData.valid_id_url = _supabase.storage.from('applicant-files').getPublicUrl(`ids/${ts}-${idFile.name}`).data.publicUrl;
 
-            // 4. SAVE
+            // 4. SAVE TO DATABASE
             btn.innerText = "Saving Data...";
             applicationData.status = 'Pending';
             applicationData.id_type = idType;
@@ -236,8 +238,7 @@
             const { error: insertErr } = await _supabase.from('applicants').insert([applicationData]);
             if (insertErr) throw insertErr;
 
-            // --- TRIGGER EMAIL NOTIFICATION ---
-            console.log("Triggering email...");
+            // Trigger Email Notification
             try {
                 await _supabase.functions.invoke('send-email', {
                     body: {
@@ -246,13 +247,10 @@
                         position: applicationData.desired_position
                     }
                 });
-                console.log("Email triggered successfully");
-            } catch (emailErr) {
-                console.error("Email failed but data saved:", emailErr);
-            }
+            } catch (emailErr) { console.warn("Email trigger error:", emailErr); }
 
             localStorage.removeItem('applicationData');
-            showModal("Success", "Application Submitted Successfully! Please wait for our HR team to contact you.", "fa-check-circle");
+            showModal("Success", "Application Submitted Successfully! Our team will contact you soon.", "fa-check-circle");
 
         } catch (error) {
             btn.disabled = false;
