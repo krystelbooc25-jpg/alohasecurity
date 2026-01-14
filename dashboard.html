@@ -170,6 +170,9 @@
             font-weight: 800; border: 2px solid white;
         }
         .date-alert { font-size: 11px; color: #e67e22; font-weight: 700; margin-top: 4px; display: block; }
+        
+        /* --- BULK TRASH STYLES (ADDED) --- */
+        .btn-bulk-delete { background: #ff4d4f; color: white; padding: 8px 15px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; display: none; }
 
     </style>
 </head>
@@ -320,15 +323,21 @@
 
             <!-- TRASH BIN SECTION (ADDED) -->
             <section id="trash-tab" class="hidden">
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: #444;">Trash Bin</h4>
-                    <p style="color: #888; font-size: 0.9rem;">Review applications currently marked as Rejected.</p>
+                <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4 style="color: #444;">Trash Bin</h4>
+                        <p style="color: #888; font-size: 0.9rem;">Review applications currently marked as Rejected. (Auto-delete after 3 days)</p>
+                    </div>
+                    <!-- BULK DELETE BTN (ADDED) -->
+                    <button id="bulk-delete-btn" class="btn-bulk-delete" onclick="bulkDeleteTrash()"><i class="fas fa-fire"></i> Delete Selected</button>
                 </div>
                 <div class="card">
                     <div style="overflow-x: auto;">
                         <table>
                             <thead>
                                 <tr>
+                                    <!-- SELECT ALL (ADDED) -->
+                                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-trash" onclick="toggleSelectAllTrash(this)"></th>
                                     <th>Applicant Name</th>
                                     <th>Position</th>
                                     <th>Status</th>
@@ -356,6 +365,18 @@
         const { data, error } = await _supabase.from('applicants').select('*').order('created_at', { ascending: false });
         if (error) return console.error(error);
         masterData = data;
+        
+        // AUTO DELETE AFTER 3 DAYS LOGIC (ADDED)
+        const now = new Date();
+        const trashItems = masterData.filter(a => a.status?.toLowerCase() === 'rejected');
+        for (let item of trashItems) {
+            const rejectedDate = new Date(item.updated_at || item.created_at); // Fallback to created_at
+            const diffDays = Math.ceil((now - rejectedDate) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 3) {
+                await _supabase.from('applicants').delete().eq('id', item.id);
+            }
+        }
+
         updateUI();
     }
 
@@ -437,18 +458,23 @@
         }).join('');
     }
 
-    // --- TRASH BIN RENDER (ADDED) ---
+    // --- TRASH BIN RENDER (MODIFIED TO ADD CHECKBOX) ---
     function renderTrashBin() {
         const tbody = document.getElementById('trash-table-body');
         const trashList = masterData.filter(a => a.status?.toLowerCase() === 'rejected');
         
+        // Reset check state
+        document.getElementById('select-all-trash').checked = false;
+        document.getElementById('bulk-delete-btn').style.display = 'none';
+
         if(trashList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ccc; padding:30px;">Trash bin is empty.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#ccc; padding:30px;">Trash bin is empty.</td></tr>`;
             return;
         }
 
         tbody.innerHTML = trashList.map(app => `
             <tr>
+                <td style="text-align: center;"><input type="checkbox" class="trash-check" data-id="${app.id}" onclick="updateTrashBulkUI()"></td>
                 <td style="font-weight: 600; color: #2d3436;">${app.first_name} ${app.last_name}</td>
                 <td style="color: #636e72;">${app.desired_position || 'Security Guard'}</td>
                 <td><span class="badge rejected">Rejected</span></td>
@@ -458,6 +484,28 @@
                 </td>
             </tr>
         `).join('');
+    }
+
+    // --- SELECT ALL LOGIC (ADDED) ---
+    function toggleSelectAllTrash(source) {
+        const checkboxes = document.querySelectorAll('.trash-check');
+        for(let cb of checkboxes) cb.checked = source.checked;
+        updateTrashBulkUI();
+    }
+
+    function updateTrashBulkUI() {
+        const checkedCount = document.querySelectorAll('.trash-check:checked').length;
+        document.getElementById('bulk-delete-btn').style.display = checkedCount > 0 ? 'block' : 'none';
+    }
+
+    async function bulkDeleteTrash() {
+        const checked = document.querySelectorAll('.trash-check:checked');
+        const ids = Array.from(checked).map(cb => cb.getAttribute('data-id'));
+        const yes = await askModal("Bulk Permanent Delete?", `You are about to delete ${ids.length} records forever.`, "Delete All");
+        if(yes) {
+            const { error } = await _supabase.from('applicants').delete().in('id', ids);
+            if(!error) fetchData();
+        }
     }
 
     // --- RESTORE LOGIC (ADDED) ---
@@ -477,6 +525,18 @@
         const branch = document.getElementById('m_branch').value;
 
         if(!fname || !lname) return alert("Please fill in the name fields.");
+
+        // NEW: DUPLICATE CHECK (Added)
+        const { data: dup, error: dupErr } = await _supabase
+            .from('applicants')
+            .select('id')
+            .eq('first_name', fname)
+            .eq('last_name', lname)
+            .limit(1);
+
+        if (dup && dup.length > 0) {
+            return alert("Error: An employee with this name already exists in the system.");
+        }
 
         const { error } = await _supabase.from('applicants').insert([{
             first_name: fname,
