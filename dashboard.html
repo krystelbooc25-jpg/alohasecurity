@@ -27,6 +27,14 @@
         .nav-item:hover { background: rgba(0, 0, 0, 0.1); }
         .nav-item.active { background: var(--active-red); border-left: 6px solid white; }
         .nav-item i { font-size: 18px; width: 25px; text-align: center; }
+        
+        /* Sidebar Responsive */
+        @media (max-width: 992px) {
+            .sidebar { left: -260px; }
+            .sidebar.open { left: 0; }
+            .main-content { margin-left: 0 !important; }
+        }
+
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1050; }
         .sidebar-overlay.active { display: block; }
 
@@ -49,8 +57,11 @@
         .chart-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .chart-card h4 { margin-bottom: 15px; color: #555; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 10px; }
 
-        /* TABLES */
+        /* TABLES & SEARCH */
         .card { background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .search-bar { padding: 10px 18px; border-radius: 25px; border: 1px solid #ddd; width: 280px; transition: 0.3s; outline: none; }
+        .search-bar:focus { border-color: var(--primary-red); box-shadow: 0 0 8px rgba(210, 4, 45, 0.1); }
+
         .badge { padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .pending { background: #fff4e5; color: #d48806; }
         .approved { background: #e6f7ff; color: #1890ff; }
@@ -93,6 +104,7 @@
         </header>
 
         <div class="content-body">
+            <!-- DASHBOARD SECTION -->
             <section id="dashboard-tab">
                 <div class="stats-grid">
                     <div class="stat-card"><h4>Total Personnel</h4><div class="value" id="stat-total">0</div></div>
@@ -112,11 +124,12 @@
                 </div>
             </section>
 
+            <!-- APPLICANTS SECTION -->
             <section id="applicants-tab" class="hidden">
                 <div class="card">
-                    <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <h4 style="color: var(--primary-red);">Applicant Management</h4>
-                        <input type="text" style="padding:10px 18px; border-radius:25px; border:1px solid #ddd; width: 250px;" placeholder="Search names..." oninput="filterTable(this.value)">
+                        <input type="text" class="search-bar" placeholder="Search name or position..." oninput="filterTable(this.value)">
                     </div>
                     <div style="overflow-x: auto;">
                         <table style="width:100%; border-collapse:collapse;">
@@ -128,12 +141,15 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="applicant-table-body"></tbody>
+                            <tbody id="applicant-table-body">
+                                <!-- Data will be injected here -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
+            <!-- BRANCH VIEW SECTION -->
             <section id="branches-tab" class="hidden">
                 <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:20px;">
                     <h3 style="color: var(--primary-red);">Branch Deployment</h3>
@@ -163,6 +179,7 @@
     </div>
 
 <script>
+    // Supabase Configuration
     const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -171,24 +188,44 @@
     let branchChart, statusChart;
     const branchOptions = ["Manila Main", "Quezon City", "Makati Hub", "Davao Branch", "Cebu Office"];
 
+    // 1. Fetch Data from Supabase
     async function fetchData() {
         const { data, error } = await _supabase.from('applicants').select('*').order('created_at', { ascending: false });
-        if (error) return;
+        if (error) {
+            console.error("Error fetching data:", error);
+            return;
+        }
         masterData = data;
         updateUI();
     }
 
+    // 2. Initial UI Update
     function updateUI() {
-        document.getElementById('stat-total').innerText = masterData.length;
-        
-        // Use normalized status check
+        // Update Stats
         const getStatus = (s) => (s || 'Pending').toLowerCase().trim();
-
+        document.getElementById('stat-total').innerText = masterData.length;
         document.getElementById('stat-pending').innerText = masterData.filter(a => getStatus(a.status) === 'pending').length;
         document.getElementById('stat-approved').innerText = masterData.filter(a => getStatus(a.status) === 'approved').length;
 
+        // Render Initial Table
+        renderTableRows(masterData);
+
+        // Render Others
+        renderAccordions();
+        renderCharts();
+    }
+
+    // 3. Render Table Rows (Separated for Search)
+    function renderTableRows(dataList) {
         const tbody = document.getElementById('applicant-table-body');
-        tbody.innerHTML = masterData.map(app => {
+        const getStatus = (s) => (s || 'Pending').toLowerCase().trim();
+
+        if (dataList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:#888;">No results found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = dataList.map(app => {
             const currentStatus = getStatus(app.status);
             return `
                 <tr style="border-bottom:1px solid #eee;">
@@ -197,18 +234,29 @@
                     <td><span class="badge ${currentStatus}">${app.status || 'Pending'}</span></td>
                     <td>
                         <div class="btn-group">
-                            <button class="btn-sm btn-view" onclick="window.location.href='view-applicant.html?id=${app.id}'"><i class="fas fa-eye"></i></button>
-                            <button class="btn-sm btn-delete" onclick="deleteApp('${app.id}')"><i class="fas fa-trash"></i></button>
+                            <button class="btn-sm btn-view" title="View Details" onclick="window.location.href='view-applicant.html?id=${app.id}'"><i class="fas fa-eye"></i></button>
+                            <button class="btn-sm btn-delete" title="Delete" onclick="deleteApp('${app.id}')"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
             `;
         }).join('');
-
-        renderAccordions();
-        renderCharts();
     }
 
+    // 4. FIXED SEARCH FUNCTION
+    function filterTable(searchTerm) {
+        const query = searchTerm.toLowerCase().trim();
+        
+        const filtered = masterData.filter(app => {
+            const fullName = `${app.first_name} ${app.last_name}`.toLowerCase();
+            const position = (app.desired_position || '').toLowerCase();
+            return fullName.includes(query) || position.includes(query);
+        });
+
+        renderTableRows(filtered);
+    }
+
+    // 5. Render Branch Accordions
     function renderAccordions() {
         const container = document.getElementById('branch-accordion-container');
         const getStatus = (s) => (s || 'Pending').toLowerCase().trim();
@@ -219,7 +267,7 @@
                 <div class="branch-accordion">
                     <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('active')">
                         <span><i class="fas fa-map-marker-alt" style="margin-right: 10px; color: var(--primary-red);"></i> ${branch}</span>
-                        <span>${guards.length} Personnel Assigned <i class="fas fa-chevron-down"></i></span>
+                        <span>${guards.length} Personnel <i class="fas fa-chevron-down" style="margin-left:10px;"></i></span>
                     </div>
                     <div class="accordion-content">
                         ${guards.length ? guards.map(g => `
@@ -234,18 +282,47 @@
         }).join('');
     }
 
-    async function unassign(id) { await _supabase.from('applicants').update({assigned_branch: ''}).eq('id',id); fetchData(); }
-    async function deleteApp(id) { if(confirm("Delete record?")) { await _supabase.from('applicants').delete().eq('id',id); fetchData(); } }
-    
-    async function saveNewGuard() {
-        const g = {first_name: document.getElementById('m-fname').value, last_name: document.getElementById('m-lname').value, assigned_branch: document.getElementById('m-branch').value, status: 'Approved'};
-        await _supabase.from('applicants').insert([g]); fetchData(); closeModal();
+    // 6. Data Management Functions
+    async function unassign(id) { 
+        if(confirm("Unassign this guard from this branch?")) {
+            await _supabase.from('applicants').update({assigned_branch: ''}).eq('id',id); 
+            fetchData(); 
+        }
     }
 
+    async function deleteApp(id) { 
+        if(confirm("Are you sure you want to delete this record? This cannot be undone.")) { 
+            await _supabase.from('applicants').delete().eq('id',id); 
+            fetchData(); 
+        } 
+    }
+    
+    async function saveNewGuard() {
+        const fname = document.getElementById('m-fname').value;
+        const lname = document.getElementById('m-lname').value;
+        const branch = document.getElementById('m-branch').value;
+
+        if(!fname || !lname) return alert("Please fill in the names.");
+
+        const g = { first_name: fname, last_name: lname, assigned_branch: branch, status: 'Approved' };
+        const { error } = await _supabase.from('applicants').insert([g]); 
+        
+        if(error) alert("Error: " + error.message);
+        else {
+            fetchData(); 
+            closeModal();
+            // Clear inputs
+            document.getElementById('m-fname').value = "";
+            document.getElementById('m-lname').value = "";
+        }
+    }
+
+    // 7. Render Charts
     function renderCharts() {
         const getStatus = (s) => (s || 'Pending').toLowerCase().trim();
-        const counts = branchOptions.map(b => masterData.filter(a => a.assigned_branch === b && getStatus(a.status) === 'approved').length);
         
+        // Branch Chart
+        const counts = branchOptions.map(b => masterData.filter(a => a.assigned_branch === b && getStatus(a.status) === 'approved').length);
         const ctx1 = document.getElementById('branchChart').getContext('2d');
         if (branchChart) branchChart.destroy();
         branchChart = new Chart(ctx1, {
@@ -254,6 +331,7 @@
             options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
         });
 
+        // Status Chart
         const statusData = [
             masterData.filter(a => getStatus(a.status) === 'pending').length,
             masterData.filter(a => getStatus(a.status) === 'approved').length,
@@ -268,22 +346,31 @@
         });
     }
 
+    // 8. Tab Navigation Logic
     function switchTab(tabId, el) {
         document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
         document.getElementById(tabId).classList.remove('hidden');
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
         document.getElementById('current-title').innerText = el.innerText.toUpperCase();
+        
+        // Close sidebar on mobile after clicking
+        if(window.innerWidth <= 992) toggleSidebar();
     }
 
+    // 9. Layout Utilities
     function toggleSidebar() { 
         document.getElementById('sidebar').classList.toggle('open'); 
         document.getElementById('overlay').classList.toggle('active');
     }
     function closeModal() { document.getElementById('addGuardModal').style.display = 'none'; }
     function openModal() { document.getElementById('addGuardModal').style.display = 'flex'; }
-    async function handleLogout() { await _supabase.auth.signOut(); window.location.href = 'AdminLogin.html'; }
+    async function handleLogout() { 
+        await _supabase.auth.signOut(); 
+        window.location.href = 'AdminLogin.html'; 
+    }
 
+    // Initialize
     fetchData();
 </script>
 </body>
