@@ -178,7 +178,7 @@
         const idType = document.getElementById('id-type').value;
 
         btn.disabled = true;
-        btn.innerText = "Checking Application...";
+        btn.innerText = "Processing...";
 
         try {
             // 1. AGE CHECK
@@ -236,7 +236,8 @@
             const { error: insertErr } = await _supabase.from('applicants').insert([applicationData]);
             if (insertErr) throw insertErr;
 
-            // --- TRIGGER EMAIL NOTIFICATION (RESTORED) ---
+            // --- TRIGGER EMAIL NOTIFICATION ---
+            console.log("Triggering email...");
             try {
                 await _supabase.functions.invoke('send-email', {
                     body: {
@@ -245,8 +246,9 @@
                         position: applicationData.desired_position
                     }
                 });
+                console.log("Email triggered successfully");
             } catch (emailErr) {
-                console.warn("Email failed but data saved:", emailErr);
+                console.error("Email failed but data saved:", emailErr);
             }
 
             localStorage.removeItem('applicationData');
