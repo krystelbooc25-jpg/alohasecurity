@@ -158,6 +158,19 @@
         /* --- CHARTS WRAPPER --- */
         .charts-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
+
+        /* --- NOTIFICATION BELL STYLES (ADDED) --- */
+        .notification-wrapper { position: relative; margin-right: 20px; cursor: pointer; }
+        .notification-bell { font-size: 1.4rem; color: #666; }
+        .notification-badge { 
+            position: absolute; top: -5px; right: -5px; 
+            background: #ff4d4f; color: white; border-radius: 50%; 
+            width: 18px; height: 18px; font-size: 10px; 
+            display: none; align-items: center; justify-content: center;
+            font-weight: 800; border: 2px solid white;
+        }
+        .date-alert { font-size: 11px; color: #e67e22; font-weight: 700; margin-top: 4px; display: block; }
+
     </style>
 </head>
 <body>
@@ -221,6 +234,8 @@
         <div class="nav-item active" onclick="switchTab('dashboard-tab', this)"><i class="fas fa-th-large"></i> Dashboard</div>
         <div class="nav-item" onclick="switchTab('applicants-tab', this)"><i class="fas fa-user-shield"></i> Applicants</div>
         <div class="nav-item" onclick="switchTab('branches-tab', this)"><i class="fas fa-map-marked-alt"></i> Branch View</div>
+        <!-- TRASH BIN LINK (ADDED) -->
+        <div class="nav-item" onclick="switchTab('trash-tab', this)"><i class="fas fa-trash-alt"></i> Trash Bin</div>
         
         <div style="margin-top: auto; padding-bottom: 20px;">
             <div class="nav-item" onclick="handleLogout()" style="border-top: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-sign-out-alt"></i> Logout</div>
@@ -232,6 +247,11 @@
             <div class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
             <h3 id="current-title" style="color: var(--primary-red); font-weight: 800;">DASHBOARD</h3>
             <div style="display: flex; align-items: center; gap: 10px;">
+                <!-- NOTIFICATION BELL (ADDED) -->
+                <div class="notification-wrapper" title="New Applications" onclick="switchTab('applicants-tab', document.querySelectorAll('.nav-item')[1])">
+                    <i class="fas fa-bell notification-bell"></i>
+                    <span id="notif-badge" class="notification-badge">0</span>
+                </div>
                 <span style="font-size: 12px; font-weight: 600; color: #aaa;">SYSTEM ADMIN</span>
                 <div style="width: 35px; height: 35px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-user-cog" style="color: #666;"></i>
@@ -297,6 +317,29 @@
                 </div>
                 <div id="branch-accordion-container"></div>
             </section>
+
+            <!-- TRASH BIN SECTION (ADDED) -->
+            <section id="trash-tab" class="hidden">
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #444;">Trash Bin</h4>
+                    <p style="color: #888; font-size: 0.9rem;">Review applications currently marked as Rejected.</p>
+                </div>
+                <div class="card">
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Applicant Name</th>
+                                    <th>Position</th>
+                                    <th>Status</th>
+                                    <th style="text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trash-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -317,27 +360,53 @@
     }
 
     function updateUI() {
+        const pendingApps = masterData.filter(a => a.status?.toLowerCase() === 'pending');
+        
         document.getElementById('stat-total').innerText = masterData.length;
-        document.getElementById('stat-pending').innerText = masterData.filter(a => a.status?.toLowerCase() === 'pending').length;
+        document.getElementById('stat-pending').innerText = pendingApps.length;
         document.getElementById('stat-approved').innerText = masterData.filter(a => a.status?.toLowerCase() === 'approved').length;
+        
+        // UPDATE NOTIFICATION BADGE (ADDED)
+        const badge = document.getElementById('notif-badge');
+        if(pendingApps.length > 0) {
+            badge.innerText = pendingApps.length;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+
         renderTableRows(masterData);
         renderCharts();
         renderAccordions();
+        renderTrashBin(); // (ADDED)
     }
 
     function renderTableRows(list) {
         const tbody = document.getElementById('applicant-table-body');
-        tbody.innerHTML = list.map(app => `
-            <tr>
-                <td style="font-weight: 600; color: #2d3436;">${app.first_name} ${app.last_name}</td>
-                <td style="color: #636e72;">${app.desired_position || 'Security Guard'}</td>
-                <td><span class="badge ${app.status?.toLowerCase() || 'pending'}">${app.status || 'Pending'}</span></td>
-                <td style="text-align: center;">
-                    <button class="btn-sm btn-view" title="View Details" onclick="window.location.href='view-applicant.html?id=${app.id}'"><i class="fas fa-eye"></i></button>
-                    <button class="btn-sm btn-delete" title="Delete" onclick="deleteApp('${app.id}')"><i class="fas fa-trash-alt"></i></button>
-                </td>
-            </tr>
-        `).join('');
+        // FILTER OUT REJECTED FROM ACTIVE LIST TO TREAT THEM AS TRASHED (ADDED LOGIC)
+        const activeList = list.filter(a => a.status?.toLowerCase() !== 'rejected');
+
+        tbody.innerHTML = activeList.map(app => {
+            // DATE ALERT LOGIC (ADDED)
+            const appDate = new Date(app.created_at);
+            const dateStr = appDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const dateAlert = (app.status?.toLowerCase() === 'pending') ? `<span class="date-alert"><i class="fas fa-clock"></i> Needs Review (${dateStr})</span>` : `<span style="font-size:10px; color:#aaa;">Submitted: ${dateStr}</span>`;
+
+            return `
+                <tr>
+                    <td style="font-weight: 600; color: #2d3436;">
+                        ${app.first_name} ${app.last_name}
+                        ${dateAlert}
+                    </td>
+                    <td style="color: #636e72;">${app.desired_position || 'Security Guard'}</td>
+                    <td><span class="badge ${app.status?.toLowerCase() || 'pending'}">${app.status || 'Pending'}</span></td>
+                    <td style="text-align: center;">
+                        <button class="btn-sm btn-view" title="View Details" onclick="window.location.href='view-applicant.html?id=${app.id}'"><i class="fas fa-eye"></i></button>
+                        <button class="btn-sm btn-delete" title="Delete" onclick="deleteApp('${app.id}')"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function renderAccordions() {
@@ -366,6 +435,35 @@
                 </div>
             `;
         }).join('');
+    }
+
+    // --- TRASH BIN RENDER (ADDED) ---
+    function renderTrashBin() {
+        const tbody = document.getElementById('trash-table-body');
+        const trashList = masterData.filter(a => a.status?.toLowerCase() === 'rejected');
+        
+        if(trashList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ccc; padding:30px;">Trash bin is empty.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = trashList.map(app => `
+            <tr>
+                <td style="font-weight: 600; color: #2d3436;">${app.first_name} ${app.last_name}</td>
+                <td style="color: #636e72;">${app.desired_position || 'Security Guard'}</td>
+                <td><span class="badge rejected">Rejected</span></td>
+                <td style="text-align: center;">
+                    <button class="btn-sm btn-view" title="Restore" onclick="restoreApplicant('${app.id}')" style="background:#e6f7ff; color:#1890ff;"><i class="fas fa-undo"></i></button>
+                    <button class="btn-sm btn-delete" title="Permanent Delete" onclick="deleteApp('${app.id}')"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // --- RESTORE LOGIC (ADDED) ---
+    async function restoreApplicant(id) {
+        const { error } = await _supabase.from('applicants').update({ status: 'Pending' }).eq('id', id);
+        if(!error) fetchData();
     }
 
     // --- MANUAL ADD LOGIC ---
