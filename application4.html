@@ -87,9 +87,9 @@
     <div id="duplicate-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-icon"><i class="fas fa-exclamation-circle"></i></div>
-            <h2>Duplicate Record</h2>
-            <p id="modal-msg">Paumanhin, ang pangalan at birthday na ito ay may record na sa aming system. Hindi na maaring mag-apply muli.</p>
-            <button class="modal-btn" onclick="closeModal()">Naiintindihan ko</button>
+            <h2>Duplicate Entry</h2>
+            <p id="modal-msg">We're sorry, but an application with this name and date of birth already exists in our system. Multiple applications are not permitted.</p>
+            <button class="modal-btn" onclick="closeModal()">I Understand</button>
         </div>
     </div>
 
@@ -112,7 +112,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Confirm Documents *</label>
+                    <label>Upload Supporting Documents *</label>
                     <div style="display:flex; gap:15px; margin-top:10px;">
                         <div style="flex:1; border:2px dashed var(--border-color); padding:20px; text-align:center; border-radius:10px;">
                             <span>Resume/CV *</span>
@@ -131,7 +131,7 @@
                 </div>
 
                 <div style="margin-top:20px;">
-                    <label style="cursor:pointer;"><input type="checkbox" id="consent-truth" required> I certify that everything is true.</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="consent-truth" required> I certify that all information provided is true and correct.</label>
                 </div>
 
                 <footer class="form-footer" style="display:flex; justify-content:space-between; margin-top:30px; border-top:1px solid #eee; padding-top:20px;">
@@ -153,13 +153,13 @@
     document.getElementById('summary-email').innerText = applicationData.email || 'N/A';
     document.getElementById('summary-position').innerText = applicationData.desired_position || 'N/A';
 
-    // Function para ipakita ang Modal
+    // Show Custom Modal
     function showModal(msg) {
         if(msg) document.getElementById('modal-msg').innerText = msg;
         document.getElementById('duplicate-modal').classList.add('active');
     }
 
-    // Function para itago ang Modal
+    // Hide Custom Modal
     function closeModal() {
         document.getElementById('duplicate-modal').classList.remove('active');
     }
@@ -170,7 +170,7 @@
         const idType = document.getElementById('id-type').value;
 
         btn.disabled = true;
-        btn.innerText = "Checking Application...";
+        btn.innerText = "Processing...";
 
         try {
             // DUPLICATE CHECK
@@ -185,11 +185,11 @@
             if (dup && dup.length > 0) {
                 btn.disabled = false;
                 btn.innerText = "Submit Application";
-                showModal(); // <--- DITO NATIN TATAWAGIN ANG CUSTOM MODAL
+                showModal(); 
                 return;
             }
 
-            // UPLOADING (Simplified for display)
+            // UPLOADING FILES
             btn.innerText = "Uploading Files...";
             const resumeFile = document.getElementById('resume-cv').files[0];
             const idFile = document.getElementById('valid-id').files[0];
@@ -201,7 +201,8 @@
             await _supabase.storage.from('applicant-files').upload(`ids/${ts}-${idFile.name}`, idFile);
             applicationData.valid_id_url = _supabase.storage.from('applicant-files').getPublicUrl(`ids/${ts}-${idFile.name}`).data.publicUrl;
 
-            // SAVE TO DB
+            // SAVE TO DATABASE
+            btn.innerText = "Saving Data...";
             applicationData.status = 'Pending';
             applicationData.id_type = idType;
             await _supabase.from('applicants').insert([applicationData]);
@@ -211,7 +212,7 @@
             window.location.href = 'index.html';
 
         } catch (error) {
-            alert(error.message);
+            alert("Error: " + error.message);
             btn.disabled = false;
             btn.innerText = "Submit Application";
         }
