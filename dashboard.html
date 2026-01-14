@@ -11,9 +11,7 @@
         :root {
             --primary-red: #D2042D;
             --active-red: #A00322;
-            --dark-bg: #111111;
             --sidebar-width: 260px;
-            --light-gray: #f8f9fa;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
@@ -21,97 +19,76 @@
 
         /* --- SIDEBAR --- */
         .sidebar { width: var(--sidebar-width); background-color: var(--primary-red); color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 1100; transition: 0.3s ease; }
-        .sidebar-logo { padding: 30px 20px; text-align: center; margin-bottom: 20px; }
-        .sidebar-logo img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.3); background: white; }
-        .nav-item { padding: 18px 25px; color: white; text-decoration: none; display: flex; align-items: center; gap: 15px; transition: 0.2s; cursor: pointer; font-size: 16px; border-left: 6px solid transparent; }
+        .sidebar-logo { padding: 30px 20px; text-align: center; }
+        .sidebar-logo img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3); background: white; }
+        .nav-item { padding: 18px 25px; color: white; text-decoration: none; display: flex; align-items: center; gap: 15px; cursor: pointer; border-left: 5px solid transparent; }
         .nav-item:hover { background: rgba(0, 0, 0, 0.1); }
-        .nav-item.active { background: var(--active-red); border-left: 6px solid white; }
-        .nav-item i { font-size: 18px; width: 25px; text-align: center; }
-        
+        .nav-item.active { background: var(--active-red); border-left: 5px solid white; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; width: 100%; }
+        .header-bar { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); sticky; top: 0; z-index: 100; }
+        .menu-toggle { display: none; cursor: pointer; }
+
         @media (max-width: 992px) {
             .sidebar { left: -260px; }
             .sidebar.open { left: 0; }
-            .main-content { margin-left: 0 !important; }
+            .main-content { margin-left: 0; }
+            .menu-toggle { display: block; }
         }
-
-        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1050; }
-        .sidebar-overlay.active { display: block; }
-
-        /* --- MAIN CONTENT --- */
-        .main-content { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; transition: 0.3s; width: 100%; }
-        .header-bar { background: white; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .menu-toggle { display: flex; align-items: center; background: none; border: none; cursor: pointer; }
-        .menu-toggle img { width: 55px; height: 55px; border-radius: 50%; border: 2px solid var(--primary-red); background: white; }
 
         .content-body { padding: 25px; }
 
-        /* STAT CARDS */
+        /* STATS */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 25px; border-radius: 12px; border-bottom: 5px solid var(--primary-red); }
-        .stat-card h4 { font-size: 13px; color: #888; text-transform: uppercase; margin-bottom: 10px; }
-        .value { font-size: 32px; font-weight: bold; }
-
-        /* CHARTS */
-        .charts-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .chart-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .chart-card h4 { margin-bottom: 15px; color: #555; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .stat-card { background: white; padding: 25px; border-radius: 15px; border-bottom: 5px solid var(--primary-red); box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .value { font-size: 32px; font-weight: bold; margin-top: 10px; }
 
         /* TABLES */
-        .card { background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .search-bar { padding: 10px 18px; border-radius: 25px; border: 1px solid #ddd; width: 280px; outline: none; }
-        .search-bar:focus { border-color: var(--primary-red); }
-
-        .badge { padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .card { background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; }
+        .badge { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .pending { background: #fff4e5; color: #d48806; }
         .approved { background: #e6f7ff; color: #1890ff; }
         .rejected { background: #fff1f0; color: #f5222d; }
 
-        .btn-group { display: flex; gap: 8px; }
-        .btn-sm { width: 35px; height: 35px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-view { background: #eef2f7; color: #3498db; }
+        .btn-sm { width: 35px; height: 35px; border-radius: 8px; border: none; cursor: pointer; transition: 0.2s; }
         .btn-delete { background: #fff1f0; color: #f5222d; }
-
-        /* BRANCH ACCORDION */
-        .branch-accordion { border: 1px solid #ddd; border-radius: 10px; margin-bottom: 12px; background: white; overflow: hidden; }
-        .accordion-header { padding: 18px; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; background: #fafafa; }
-        .accordion-content { display: none; padding: 15px; border-top: 1px solid #eee; }
-        .accordion-content.active { display: block; }
+        .btn-delete:hover { background: #f5222d; color: white; }
+        .btn-view { background: #eef2f7; color: #3498db; }
 
         /* --- COOL MODAL CSS --- */
-        .custom-modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
-            display: none; justify-content: center; align-items: center; z-index: 3000;
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
         }
-        .custom-modal {
-            background: white; width: 90%; max-width: 400px; padding: 30px; border-radius: 20px;
-            text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            transform: scale(0.8); opacity: 0; transition: 0.3s ease;
-            border-top: 8px solid var(--primary-red);
+        .modal-box {
+            background: white; width: 90%; max-width: 400px; padding: 35px; border-radius: 25px;
+            text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            transform: translateY(20px); opacity: 0; transition: 0.3s ease-out;
         }
-        .custom-modal.show { transform: scale(1); opacity: 1; }
-        .modal-icon { font-size: 50px; color: var(--primary-red); margin-bottom: 15px; }
-        .modal-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #1a1a1a; }
-        .modal-text { color: #666; margin-bottom: 25px; line-height: 1.5; }
-        .modal-footer { display: flex; gap: 10px; justify-content: center; }
-        .m-btn { padding: 10px 25px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-cancel { background: #eee; color: #333; }
+        .modal-overlay.active { display: flex; }
+        .modal-overlay.active .modal-box { transform: translateY(0); opacity: 1; }
+        
+        .modal-icon { font-size: 60px; color: var(--primary-red); margin-bottom: 15px; }
+        .modal-btn { padding: 12px 25px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin: 5px; transition: 0.2s; }
         .btn-confirm { background: var(--primary-red); color: white; }
-        .m-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-cancel { background: #f0f0f0; color: #555; }
+        .modal-btn:hover { transform: scale(1.05); }
 
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- CUSTOM MODAL HTML -->
-    <div id="modalOverlay" class="custom-modal-overlay">
-        <div id="customModal" class="custom-modal">
-            <div class="modal-icon" id="modalIcon"><i class="fas fa-exclamation-circle"></i></div>
-            <div class="modal-title" id="modalTitle">Are you sure?</div>
-            <div class="modal-text" id="modalText">This action cannot be undone.</div>
-            <div class="modal-footer">
-                <button class="m-btn btn-cancel" id="modalCancel">Cancel</button>
-                <button class="m-btn btn-confirm" id="modalConfirm">Confirm</button>
+    <!-- COOL CUSTOM MODAL -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-box">
+            <div id="modalIcon" class="modal-icon"><i class="fas fa-trash-alt"></i></div>
+            <h2 id="modalTitle" style="margin-bottom: 10px;">Are you sure?</h2>
+            <p id="modalText" style="color: #666; margin-bottom: 25px;">You are about to delete this applicant. This action cannot be undone.</p>
+            <div style="display: flex; justify-content: center;">
+                <button id="cancelBtn" class="modal-btn btn-cancel">Go Back</button>
+                <button id="confirmBtn" class="modal-btn btn-confirm">Yes, Delete</button>
             </div>
         </div>
     </div>
@@ -122,90 +99,61 @@
         <div class="nav-item" onclick="switchTab('applicants-tab', this)"><i class="fas fa-users"></i> Applicants</div>
         <div class="nav-item" onclick="switchTab('branches-tab', this)"><i class="fas fa-building"></i> Branch View</div>
         <div style="margin-top: auto; padding-bottom: 30px;">
-            <div class="nav-item" onclick="handleLogout()" style="color: white; opacity: 0.9;"><i class="fas fa-sign-out-alt"></i> Logout</div>
+            <div class="nav-item" onclick="handleLogout()" style="color: white; opacity: 0.8;"><i class="fas fa-sign-out-alt"></i> Logout</div>
         </div>
     </aside>
 
     <main class="main-content">
         <header class="header-bar">
-            <button class="menu-toggle" onclick="toggleSidebar()"><img src="Resources/logo.jpg" alt="Logo"></button>
-            <h3 id="current-title" style="color: var(--primary-red); font-weight: 800;">DASHBOARD OVERVIEW</h3>
-            <div style="font-weight: bold; color: #666; font-size: 14px;">ADMINISTRATOR</div>
+            <div class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars fa-lg"></i></div>
+            <h3 id="current-title" style="color: var(--primary-red);">DASHBOARD</h3>
+            <div style="font-weight: bold; color: #888; font-size: 13px;">ADMIN PORTAL</div>
         </header>
 
         <div class="content-body">
-            <!-- DASHBOARD SECTION -->
+            <!-- DASHBOARD -->
             <section id="dashboard-tab">
                 <div class="stats-grid">
-                    <div class="stat-card"><h4>Total Personnel</h4><div class="value" id="stat-total">0</div></div>
+                    <div class="stat-card"><h4>Total Applicants</h4><div class="value" id="stat-total">0</div></div>
                     <div class="stat-card"><h4>Pending Review</h4><div class="value" id="stat-pending" style="color: #f39c12;">0</div></div>
-                    <div class="stat-card"><h4>Approved Guards</h4><div class="value" id="stat-approved" style="color: #2ecc71;">0</div></div>
+                    <div class="stat-card"><h4>Approved</h4><div class="value" id="stat-approved" style="color: #2ecc71;">0</div></div>
                 </div>
-                <div class="charts-container">
-                    <div class="chart-card">
-                        <h4>Personnel Distribution</h4>
-                        <div style="height: 300px;"><canvas id="branchChart"></canvas></div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                    <div class="card" style="padding: 20px;">
+                        <canvas id="branchChart" height="250"></canvas>
                     </div>
-                    <div class="chart-card">
-                        <h4>Application Status</h4>
-                        <div style="height: 300px;"><canvas id="statusChart"></canvas></div>
+                    <div class="card" style="padding: 20px;">
+                        <canvas id="statusChart" height="250"></canvas>
                     </div>
                 </div>
             </section>
 
-            <!-- APPLICANTS SECTION -->
+            <!-- APPLICANTS -->
             <section id="applicants-tab" class="hidden">
                 <div class="card">
-                    <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                        <h4 style="color: var(--primary-red);">Applicant Management</h4>
-                        <input type="text" class="search-bar" placeholder="Search name..." oninput="filterTable(this.value)">
+                    <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                        <input type="text" placeholder="Search by name..." oninput="filterTable(this.value)" style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; width: 300px;">
                     </div>
-                    <div style="overflow-x: auto;">
-                        <table style="width:100%; border-collapse:collapse;">
-                            <thead>
-                                <tr style="background:#f8f9fa; text-align: left; color: #888; font-size: 11px; text-transform: uppercase;">
-                                    <th style="padding:18px;">Full Name</th>
-                                    <th>Position</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="applicant-table-body"></tbody>
-                        </table>
-                    </div>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #f9f9f9; text-align: left;">
+                            <tr>
+                                <th style="padding: 15px;">Applicant Name</th>
+                                <th>Position</th>
+                                <th>Status</th>
+                                <th style="text-align: center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicant-table-body"></tbody>
+                    </table>
                 </div>
             </section>
 
-            <!-- BRANCH VIEW SECTION -->
+            <!-- BRANCH VIEW -->
             <section id="branches-tab" class="hidden">
-                <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:20px;">
-                    <h3 style="color: var(--primary-red);">Branch Deployment</h3>
-                    <button style="background: var(--primary-red); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="openAddModal()"><i class="fas fa-plus"></i> Add Employee</button>
-                </div>
                 <div id="branch-accordion-container"></div>
             </section>
         </div>
     </main>
-
-    <!-- MANUAL ADD MODAL -->
-    <div id="manualAddModal" class="custom-modal-overlay">
-        <div class="custom-modal" id="addGuardInner">
-            <h3 style="margin-bottom: 20px; color: var(--primary-red);">Manual Entry</h3>
-            <input type="text" id="m-fname" placeholder="First Name" style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ddd; border-radius:8px;">
-            <input type="text" id="m-lname" placeholder="Last Name" style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ddd; border-radius:8px;">
-            <select id="m-branch" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:8px;">
-                <option value="Manila Main">Manila Main</option>
-                <option value="Quezon City">Quezon City</option>
-                <option value="Makati Hub">Makati Hub</option>
-                <option value="Davao Branch">Davao Branch</option>
-                <option value="Cebu Office">Cebu Office</option>
-            </select>
-            <div class="modal-footer">
-                <button onclick="closeAddModal()" class="m-btn btn-cancel">Cancel</button>
-                <button onclick="saveNewGuard()" class="m-btn btn-confirm">Save Guard</button>
-            </div>
-        </div>
-    </div>
 
 <script>
     const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
@@ -213,165 +161,142 @@
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     let masterData = [];
-    let branchChart, statusChart;
     const branchOptions = ["Manila Main", "Quezon City", "Makati Hub", "Davao Branch", "Cebu Office"];
 
+    // Fetch and Load
     async function fetchData() {
         const { data, error } = await _supabase.from('applicants').select('*').order('created_at', { ascending: false });
-        if (error) return;
+        if (error) return console.error(error);
         masterData = data;
         updateUI();
     }
 
     function updateUI() {
-        const getStatus = (s) => (s || 'Pending').toLowerCase().trim();
         document.getElementById('stat-total').innerText = masterData.length;
-        document.getElementById('stat-pending').innerText = masterData.filter(a => getStatus(a.status) === 'pending').length;
-        document.getElementById('stat-approved').innerText = masterData.filter(a => getStatus(a.status) === 'approved').length;
-
+        document.getElementById('stat-pending').innerText = masterData.filter(a => a.status?.toLowerCase() === 'pending').length;
+        document.getElementById('stat-approved').innerText = masterData.filter(a => a.status?.toLowerCase() === 'approved').length;
         renderTableRows(masterData);
-        renderAccordions();
         renderCharts();
+        renderAccordions();
     }
 
-    function renderTableRows(dataList) {
+    function renderTableRows(list) {
         const tbody = document.getElementById('applicant-table-body');
-        const getStatus = (s) => (s || 'Pending').toLowerCase().trim();
-        tbody.innerHTML = dataList.map(app => `
-            <tr style="border-bottom:1px solid #eee;">
-                <td style="padding:18px; font-weight:600;">${app.first_name} ${app.last_name}</td>
+        tbody.innerHTML = list.map(app => `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 15px; font-weight: bold;">${app.first_name} ${app.last_name}</td>
                 <td>${app.desired_position || 'Guard'}</td>
-                <td><span class="badge ${getStatus(app.status)}">${app.status || 'Pending'}</span></td>
-                <td>
-                    <div class="btn-group">
-                        <button class="btn-sm btn-view" onclick="window.location.href='view-applicant.html?id=${app.id}'"><i class="fas fa-eye"></i></button>
-                        <button class="btn-sm btn-delete" onclick="deleteApp('${app.id}')"><i class="fas fa-trash"></i></button>
-                    </div>
+                <td><span class="badge ${app.status?.toLowerCase() || 'pending'}">${app.status || 'Pending'}</span></td>
+                <td style="text-align: center;">
+                    <button class="btn-sm btn-view" onclick="window.location.href='view-applicant.html?id=${app.id}'"><i class="fas fa-eye"></i></button>
+                    <button class="btn-sm btn-delete" onclick="deleteApp('${app.id}')"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `).join('');
     }
 
-    function filterTable(searchTerm) {
-        const query = searchTerm.toLowerCase().trim();
-        const filtered = masterData.filter(app => `${app.first_name} ${app.last_name}`.toLowerCase().includes(query));
+    // --- CUSTOM MODAL ENGINE ---
+    function askModal(title, text, confirmText = "Confirm") {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('customModal');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalText').innerText = text;
+            document.getElementById('confirmBtn').innerText = confirmText;
+            
+            overlay.classList.add('active');
+            
+            document.getElementById('confirmBtn').onclick = () => { overlay.classList.remove('active'); resolve(true); };
+            document.getElementById('cancelBtn').onclick = () => { overlay.classList.remove('active'); resolve(false); };
+        });
+    }
+
+    // --- FIX DELETE FUNCTION ---
+    async function deleteApp(id) {
+        const yes = await askModal("Delete Applicant?", "Are you sure? This will permanently remove the record from Supabase.", "Delete Now");
+        if (yes) {
+            const { error } = await _supabase.from('applicants').delete().eq('id', id);
+            if (error) {
+                alert("Error: " + error.message);
+                console.error(error);
+            } else {
+                // Refresh local data immediately
+                masterData = masterData.filter(a => a.id !== id);
+                updateUI();
+            }
+        }
+    }
+
+    async function unassign(id) {
+        const yes = await askModal("Unassign Guard?", "Remove this guard from the current branch?");
+        if (yes) {
+            const { error } = await _supabase.from('applicants').update({ assigned_branch: null }).eq('id', id);
+            if (!error) fetchData();
+        }
+    }
+
+    function filterTable(val) {
+        const filtered = masterData.filter(a => `${a.first_name} ${a.last_name}`.toLowerCase().includes(val.toLowerCase()));
         renderTableRows(filtered);
     }
 
     function renderAccordions() {
         const container = document.getElementById('branch-accordion-container');
-        const getStatus = (s) => (s || 'Pending').toLowerCase().trim();
         container.innerHTML = branchOptions.map(branch => {
-            const guards = masterData.filter(a => a.assigned_branch === branch && getStatus(a.status) === 'approved');
+            const guards = masterData.filter(a => a.assigned_branch === branch && a.status === 'Approved');
             return `
                 <div class="branch-accordion">
                     <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('active')">
-                        <span><i class="fas fa-map-marker-alt" style="margin-right: 10px; color: var(--primary-red);"></i> ${branch}</span>
-                        <span>${guards.length} Personnel <i class="fas fa-chevron-down"></i></span>
+                        <span><i class="fas fa-map-marker-alt"></i> ${branch}</span>
+                        <span>${guards.length} Guards <i class="fas fa-chevron-down"></i></span>
                     </div>
                     <div class="accordion-content">
-                        ${guards.length ? guards.map(g => `
-                            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f9f9f9;">
-                                <span><strong>${g.first_name} ${g.last_name}</strong></span>
-                                <button onclick="unassign('${g.id}')" style="border:none; background:none; color:red; cursor:pointer;"><i class="fas fa-user-minus"></i></button>
+                        ${guards.map(g => `
+                            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dotted #ccc;">
+                                <span>${g.first_name} ${g.last_name}</span>
+                                <i class="fas fa-times-circle" style="color: red; cursor: pointer;" onclick="unassign('${g.id}')"></i>
                             </div>
-                        `).join('') : '<p style="color:#ccc;">No personnel deployed.</p>'}
+                        `).join('') || 'No guards assigned.'}
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    // --- CUSTOM MODAL HELPER ---
-    function showModal(title, text, type = 'confirm') {
-        return new Promise((resolve) => {
-            const overlay = document.getElementById('modalOverlay');
-            const modal = document.getElementById('customModal');
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalText').innerText = text;
-            const confirmBtn = document.getElementById('modalConfirm');
-            const cancelBtn = document.getElementById('modalCancel');
+    // Charts
+    function renderCharts() {
+        const ctx1 = document.getElementById('branchChart').getContext('2d');
+        const ctx2 = document.getElementById('statusChart').getContext('2d');
+        
+        if (window.bChart) window.bChart.destroy();
+        if (window.sChart) window.sChart.destroy();
 
-            if(type === 'alert') cancelBtn.style.display = 'none';
-            else cancelBtn.style.display = 'block';
+        const branchCounts = branchOptions.map(b => masterData.filter(a => a.assigned_branch === b).length);
+        window.bChart = new Chart(ctx1, {
+            type: 'bar',
+            data: { labels: branchOptions, datasets: [{ label: 'Deployment', data: branchCounts, backgroundColor: '#D2042D' }] },
+            options: { maintainAspectRatio: false }
+        });
 
-            overlay.style.display = 'flex';
-            setTimeout(() => modal.classList.add('show'), 10);
-
-            const close = (res) => {
-                modal.classList.remove('show');
-                setTimeout(() => { overlay.style.display = 'none'; resolve(res); }, 300);
-            };
-
-            confirmBtn.onclick = () => close(true);
-            cancelBtn.onclick = () => close(false);
+        window.sChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: { labels: ['Pending', 'Approved', 'Rejected'], datasets: [{ data: [
+                masterData.filter(a => a.status === 'Pending').length,
+                masterData.filter(a => a.status === 'Approved').length,
+                masterData.filter(a => a.status === 'Rejected').length
+            ], backgroundColor: ['#f39c12', '#2ecc71', '#e74c3c'] }] },
+            options: { maintainAspectRatio: false }
         });
     }
 
-    async function deleteApp(id) {
-        const confirm = await showModal("Delete Applicant?", "Are you sure you want to delete this record? This cannot be undone.");
-        if (confirm) {
-            const { error } = await _supabase.from('applicants').delete().eq('id', id);
-            if (error) showModal("Error", "Could not delete record.", "alert");
-            else { fetchData(); showModal("Success", "Record deleted successfully.", "alert"); }
-        }
-    }
-
-    async function unassign(id) {
-        const confirm = await showModal("Unassign Guard?", "Do you want to remove this guard from this branch?");
-        if (confirm) {
-            await _supabase.from('applicants').update({assigned_branch: ''}).eq('id', id);
-            fetchData();
-        }
-    }
-
-    async function saveNewGuard() {
-        const fname = document.getElementById('m-fname').value;
-        const lname = document.getElementById('m-lname').value;
-        const branch = document.getElementById('m-branch').value;
-        if(!fname || !lname) return showModal("Missing Info", "Please enter full name.", "alert");
-
-        const { error } = await _supabase.from('applicants').insert([{ first_name: fname, last_name: lname, assigned_branch: branch, status: 'Approved' }]);
-        if(error) showModal("Error", error.message, "alert");
-        else { fetchData(); closeAddModal(); showModal("Saved", "New guard added.", "alert"); }
-    }
-
-    // Modal Helpers for Adding
-    function openAddModal() { 
-        document.getElementById('manualAddModal').style.display = 'flex'; 
-        setTimeout(() => document.getElementById('addGuardInner').classList.add('show'), 10);
-    }
-    function closeAddModal() { 
-        document.getElementById('addGuardInner').classList.remove('show');
-        setTimeout(() => document.getElementById('manualAddModal').style.display = 'none', 300);
-    }
-
-    function renderCharts() {
-        const getStatus = (s) => (s || 'Pending').toLowerCase().trim();
-        const counts = branchOptions.map(b => masterData.filter(a => a.assigned_branch === b && getStatus(a.status) === 'approved').length);
-        const ctx1 = document.getElementById('branchChart').getContext('2d');
-        if (branchChart) branchChart.destroy();
-        branchChart = new Chart(ctx1, { type: 'bar', data: { labels: branchOptions, datasets: [{ label: 'Guards', data: counts, backgroundColor: '#D2042D' }] }, options: { indexAxis: 'y', maintainAspectRatio: false } });
-
-        const statusData = [masterData.filter(a => getStatus(a.status) === 'pending').length, masterData.filter(a => getStatus(a.status) === 'approved').length, masterData.filter(a => getStatus(a.status) === 'rejected').length];
-        const ctx2 = document.getElementById('statusChart').getContext('2d');
-        if (statusChart) statusChart.destroy();
-        statusChart = new Chart(ctx2, { type: 'doughnut', data: { labels: ['Pending', 'Approved', 'Rejected'], datasets: [{ data: statusData, backgroundColor: ['#f39c12', '#2ecc71', '#e74c3c'] }] }, options: { maintainAspectRatio: false } });
-    }
-
-    function switchTab(tabId, el) {
+    function switchTab(id, el) {
         document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-        document.getElementById(tabId).classList.remove('hidden');
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.remove('hidden');
         el.classList.add('active');
         document.getElementById('current-title').innerText = el.innerText.toUpperCase();
-        if(window.innerWidth <= 992) toggleSidebar();
     }
 
-    function toggleSidebar() { 
-        document.getElementById('sidebar').classList.toggle('open'); 
-        document.getElementById('overlay').classList.toggle('active');
-    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
     async function handleLogout() { await _supabase.auth.signOut(); window.location.href = 'AdminLogin.html'; }
 
     fetchData();
