@@ -156,30 +156,20 @@
     document.getElementById('summary-email').innerText = applicationData.email || 'N/A';
     document.getElementById('summary-position').innerText = applicationData.desired_position || 'N/A';
 
-    // Show Custom Modal
     function showModal(title, msg, iconClass = "fa-exclamation-circle") {
         document.getElementById('modal-title').innerText = title;
         document.getElementById('modal-msg').innerText = msg;
-        
         const iconDiv = document.getElementById('modal-icon-div');
         iconDiv.innerHTML = `<i class="fas ${iconClass}"></i>`;
-        
-        if (title === "Success") {
-            iconDiv.classList.add('success-icon');
-        } else {
-            iconDiv.classList.remove('success-icon');
-        }
-        
+        if (title === "Success") { iconDiv.classList.add('success-icon'); } 
+        else { iconDiv.classList.remove('success-icon'); }
         document.getElementById('duplicate-modal').classList.add('active');
     }
 
-    // Close Modal and Handle Redirect
     function closeModal() {
         const title = document.getElementById('modal-title').innerText;
         document.getElementById('duplicate-modal').classList.remove('active');
-        if (title === "Success") {
-            window.location.href = 'index.html';
-        }
+        if (title === "Success") { window.location.href = 'index.html'; }
     }
 
     document.getElementById('final-form').onsubmit = async (e) => {
@@ -188,10 +178,10 @@
         const idType = document.getElementById('id-type').value;
 
         btn.disabled = true;
-        btn.innerText = "Processing...";
+        btn.innerText = "Checking Application...";
 
         try {
-            // 1. AGE REQUIREMENT CHECK (21+)
+            // 1. AGE CHECK
             const birthDate = new Date(applicationData.dob);
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
@@ -205,7 +195,7 @@
                 return;
             }
 
-            // 2. STRICT DUPLICATE CHECK (.ilike for case-insensitivity)
+            // 2. DUPLICATE CHECK
             const { data: dup, error: nameErr } = await _supabase
                 .from('applicants')
                 .select('id')
@@ -220,11 +210,11 @@
             if (dup && dup.length > 0) {
                 btn.disabled = false;
                 btn.innerText = "Submit Application";
-                showModal("Record Exists", "Our system shows that you have already submitted an application with these details. Multiple submissions are not allowed."); 
+                showModal("Record Exists", "Our records show that you have already submitted an application. Multiple submissions are not allowed."); 
                 return;
             }
 
-            // 3. UPLOADING FILES
+            // 3. UPLOADING
             btn.innerText = "Uploading Files...";
             const resumeFile = document.getElementById('resume-cv').files[0];
             const idFile = document.getElementById('valid-id').files[0];
@@ -238,7 +228,7 @@
             if (iErr) throw iErr;
             applicationData.valid_id_url = _supabase.storage.from('applicant-files').getPublicUrl(`ids/${ts}-${idFile.name}`).data.publicUrl;
 
-            // 4. SAVE TO DATABASE
+            // 4. SAVE
             btn.innerText = "Saving Data...";
             applicationData.status = 'Pending';
             applicationData.id_type = idType;
@@ -246,14 +236,27 @@
             const { error: insertErr } = await _supabase.from('applicants').insert([applicationData]);
             if (insertErr) throw insertErr;
 
+            // --- TRIGGER EMAIL NOTIFICATION (RESTORED) ---
+            try {
+                await _supabase.functions.invoke('send-email', {
+                    body: {
+                        applicant_name: applicationData.first_name,
+                        applicant_email: applicationData.email,
+                        position: applicationData.desired_position
+                    }
+                });
+            } catch (emailErr) {
+                console.warn("Email failed but data saved:", emailErr);
+            }
+
             localStorage.removeItem('applicationData');
-            showModal("Success", "Application Submitted Successfully! Please wait for our team to contact you.", "fa-check-circle");
+            showModal("Success", "Application Submitted Successfully! Please wait for our HR team to contact you.", "fa-check-circle");
 
         } catch (error) {
             btn.disabled = false;
             btn.innerText = "Submit Application";
             console.error(error);
-            showModal("Error", "Something went wrong: " + error.message, "fa-times-circle");
+            showModal("Error", "Error: " + error.message, "fa-times-circle");
         }
     };
    </script>
