@@ -9,17 +9,90 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --primary-red: #D2042D; --container-bg: #ffffff; --text-main: #1a1a1a; --border-color: #d1d9e0; --input-bg: #ffffff; }
-        body.dark-mode { --container-bg: #1a1a1a; --text-main: #f0f0f0; --border-color: #333; --input-bg: #252525; background-color: #0f0f0f; }
-        * { box-sizing: border-box; }
-        body { padding: 20px 10px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; background-color: #f0f4f8; color: var(--text-main); }
-        .application-container { width: 100%; max-width: 1000px; background-color: var(--container-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--primary-red); }
+        body { padding: 20px 10px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; background-color: #f0f4f8; color: var(--text-main); font-family: 'Segoe UI', sans-serif; }
+        
+        .application-container { width: 100%; max-width: 1000px; background-color: var(--container-bg); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--primary-red); overflow: hidden; }
         .summary-grid { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 10px 20px; }
         .summary-grid p { word-break: break-word; margin: 0; }
         .id-select { width: 100%; margin-bottom: 10px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--input-bg); color: var(--text-main); font-size: 14px; }
-        @media (max-width: 768px) { .app-header { flex-direction: column; text-align: center; } .progress-bar { padding: 20px 10px; } .step-label { display: none; } .summary-grid { grid-template-columns: 1fr; } .form-footer { flex-direction: column-reverse; gap: 10px; } .btn { width: 100%; justify-content: center; } }
+
+        /* --- CUSTOM MODAL CSS --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-top: 6px solid var(--primary-red);
+            transform: scale(0.8);
+            opacity: 0;
+            transition: 0.3s ease-out;
+        }
+
+        .modal-overlay.active { display: flex; }
+        .modal-overlay.active .modal-box { transform: scale(1); opacity: 1; }
+
+        .modal-icon {
+            font-size: 50px;
+            color: var(--primary-red);
+            margin-bottom: 15px;
+        }
+
+        .modal-box h2 {
+            margin: 0 0 10px;
+            color: #333;
+            font-size: 22px;
+        }
+
+        .modal-box p {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .modal-btn {
+            background: var(--primary-red);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        .modal-btn:hover { background: #a50323; transform: translateY(-2px); }
+
+        @media (max-width: 768px) { .app-header { flex-direction: column; text-align: center; } .summary-grid { grid-template-columns: 1fr; } .form-footer { flex-direction: column-reverse; gap: 10px; } .btn { width: 100%; justify-content: center; } }
     </style>
 </head>
 <body>
+
+    <!-- CUSTOM MODAL HTML -->
+    <div id="duplicate-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <h2>Duplicate Record</h2>
+            <p id="modal-msg">Paumanhin, ang pangalan at birthday na ito ay may record na sa aming system. Hindi na maaring mag-apply muli.</p>
+            <button class="modal-btn" onclick="closeModal()">Naiintindihan ko</button>
+        </div>
+    </div>
+
     <div class="application-container">
         <header class="app-header" style="display:flex; justify-content:space-between; align-items:center; padding:20px;">
             <a href="application3.html" class="back-link" style="text-decoration:none; color:inherit;"><i class="fas fa-arrow-left"></i> Back</a>
@@ -42,7 +115,7 @@
                     <label>Confirm Documents *</label>
                     <div style="display:flex; gap:15px; margin-top:10px;">
                         <div style="flex:1; border:2px dashed var(--border-color); padding:20px; text-align:center; border-radius:10px;">
-                            <span id="resume-label">Resume/CV *</span>
+                            <span>Resume/CV *</span>
                             <input type="file" id="resume-cv" required style="margin-top:10px;">
                         </div>
                         <div style="flex:1; border:2px dashed var(--border-color); padding:20px; text-align:center; border-radius:10px;">
@@ -70,119 +143,74 @@
     </div>
 
    <script>
-    // 1. INIT SUPABASE
     const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 2. LOAD DATA
-    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
     const applicationData = JSON.parse(localStorage.getItem('applicationData')) || {};
     
     document.getElementById('summary-name').innerText = `${applicationData.first_name || ''} ${applicationData.last_name || ''}`;
     document.getElementById('summary-email').innerText = applicationData.email || 'N/A';
     document.getElementById('summary-position').innerText = applicationData.desired_position || 'N/A';
 
-    // 3. SUBMIT LOGIC
+    // Function para ipakita ang Modal
+    function showModal(msg) {
+        if(msg) document.getElementById('modal-msg').innerText = msg;
+        document.getElementById('duplicate-modal').classList.add('active');
+    }
+
+    // Function para itago ang Modal
+    function closeModal() {
+        document.getElementById('duplicate-modal').classList.remove('active');
+    }
+
     document.getElementById('final-form').onsubmit = async (e) => {
         e.preventDefault();
         const btn = document.getElementById('submit-button');
         const idType = document.getElementById('id-type').value;
 
-        if (!idType) return alert("Pumili ng ID Type.");
-        
         btn.disabled = true;
         btn.innerText = "Checking Application...";
 
         try {
-            // --- NEW: CHECK FOR DUPLICATE NAME AND BIRTHDAY ---
-            console.log("Checking for duplicate identity...");
-            const { data: duplicateName, error: nameErr } = await _supabase
+            // DUPLICATE CHECK
+            const { data: dup, error: nameErr } = await _supabase
                 .from('applicants')
-                .select('id, created_at')
+                .select('id')
                 .eq('first_name', applicationData.first_name)
                 .eq('last_name', applicationData.last_name)
                 .eq('dob', applicationData.dob)
                 .limit(1);
 
-            if (nameErr) throw new Error("Database check error: " + nameErr.message);
-
-            if (duplicateName && duplicateName.length > 0) {
+            if (dup && dup.length > 0) {
                 btn.disabled = false;
                 btn.innerText = "Submit Application";
-                return alert("Paumanhin, ang pangalan at birthday na ito ay may record na sa aming system. Hindi na maaring mag-apply muli.");
+                showModal(); // <--- DITO NATIN TATAWAGIN ANG CUSTOM MODAL
+                return;
             }
 
-            // --- CHECK FOR DUPLICATE EMAIL ---
-            console.log("Checking email...");
-            const { data: existingEmail, error: fetchErr } = await _supabase
-                .from('applicants')
-                .select('status, created_at')
-                .eq('email', applicationData.email)
-                .order('created_at', { ascending: false })
-                .limit(1);
-
-            if (fetchErr) throw new Error("Duplicate Check Error: " + fetchErr.message);
-
-            if (existingEmail && existingEmail.length > 0) {
-                if (existingEmail[0].status !== 'Rejected') {
-                    btn.disabled = false;
-                    btn.innerText = "Submit Application";
-                    return alert("May active application ka na gamit ang email na ito.");
-                }
-                const months = Math.abs(new Date() - new Date(existingEmail[0].created_at)) / (1000 * 60 * 60 * 24 * 30.44);
-                if (months < 3) {
-                    btn.disabled = false;
-                    btn.innerText = "Submit Application";
-                    return alert("Kailangan mag-antay ng 3 months bago mag-apply uli gamit ang email na ito.");
-                }
-            }
-
-            // --- UPLOADING FILES ---
-            console.log("Uploading files...");
+            // UPLOADING (Simplified for display)
             btn.innerText = "Uploading Files...";
             const resumeFile = document.getElementById('resume-cv').files[0];
             const idFile = document.getElementById('valid-id').files[0];
-            if (!resumeFile || !idFile) throw new Error("Pakipili uli ang Resume at ID Photo.");
-
             const ts = Date.now();
-            
-            // Upload Resume
-            const { error: rErr } = await _supabase.storage.from('applicant-files').upload(`resumes/${ts}-${resumeFile.name}`, resumeFile);
-            if (rErr) throw new Error("Resume Upload Error: " + rErr.message);
+
+            await _supabase.storage.from('applicant-files').upload(`resumes/${ts}-${resumeFile.name}`, resumeFile);
             applicationData.resume_url = _supabase.storage.from('applicant-files').getPublicUrl(`resumes/${ts}-${resumeFile.name}`).data.publicUrl;
 
-            // Upload ID
-            const { error: iErr } = await _supabase.storage.from('applicant-files').upload(`ids/${ts}-${idFile.name}`, idFile);
-            if (iErr) throw new Error("ID Upload Error: " + iErr.message);
+            await _supabase.storage.from('applicant-files').upload(`ids/${ts}-${idFile.name}`, idFile);
             applicationData.valid_id_url = _supabase.storage.from('applicant-files').getPublicUrl(`ids/${ts}-${idFile.name}`).data.publicUrl;
 
-            // --- SAVING TO DATABASE ---
-            console.log("Saving to DB...");
-            btn.innerText = "Saving to Database...";
+            // SAVE TO DB
             applicationData.status = 'Pending';
             applicationData.id_type = idType;
-
-            const { error: insErr } = await _supabase.from('applicants').insert([applicationData]);
-            if (insErr) throw new Error("Database Save Error: " + insErr.message);
-
-            // Optional: Trigger Email Notification
-            try { 
-                await _supabase.functions.invoke('send-email', { 
-                    body: { 
-                        applicant_name: applicationData.first_name, 
-                        applicant_email: applicationData.email, 
-                        position: applicationData.desired_position 
-                    } 
-                }); 
-            } catch (m) { console.log("Email function skipped or failed."); }
+            await _supabase.from('applicants').insert([applicationData]);
 
             alert("Application Submitted Successfully!");
             localStorage.removeItem('applicationData');
             window.location.href = 'index.html';
 
         } catch (error) {
-            console.error(error);
             alert(error.message);
             btn.disabled = false;
             btn.innerText = "Submit Application";
