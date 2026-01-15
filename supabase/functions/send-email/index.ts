@@ -22,14 +22,58 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Aloha Security <onboarding@resend.dev>',
+       from: 'Aloha Security <onboarding@resend.dev>',
         to: ['krystelbooc25@gmail.com'], 
         subject: `New Application: ${applicant_name}`,
         html: `
-          <h2>New Job Application Received</h2>
-          <p><strong>Name:</strong> ${applicant_name}</p>
-          <p><strong>Applicant Email:</strong> ${applicant_email}</p>
-          <p><strong>Position Applied:</strong> ${position}</p>
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; color: #333;">
+            <!-- Header Section -->
+            <div style="background-color: #D2042D; padding: 20px; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 1px;">ALOHA SECURITY AGENCY</h1>
+                <p style="color: #ffcccc; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase;">Recruitment Notification</p>
+            </div>
+
+            <!-- Body Section -->
+            <div style="padding: 30px; background-color: #ffffff;">
+                <h2 style="color: #D2042D; font-size: 20px; border-bottom: 2px solid #f4f4f4; padding-bottom: 10px;">New Job Application Received</h2>
+                <p style="font-size: 16px; line-height: 1.6;">A new candidate has submitted their application through the online portal. Here are the summary details:</p>
+                
+                <div style="background-color: #f9f9f9; border-radius: 6px; padding: 20px; margin-top: 20px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold; color: #666; width: 150px;">Applicant Name:</td>
+                            <td style="padding: 8px 0; font-size: 16px; color: #1a1a1a;">${applicant_name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold; color: #666;">Email Address:</td>
+                            <td style="padding: 8px 0; font-size: 16px; color: #1a1a1a;">${applicant_email}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold; color: #666;">Position Applied:</td>
+                            <td style="padding: 8px 0;">
+                                <span style="background-color: #D2042D; color: white; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold;">
+                                    ${position}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Action Button -->
+                <div style="margin-top: 30px; text-align: center;">
+                    <a href="https://your-admin-dashboard-link.com" 
+                       style="background-color: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 15px;">
+                       Review Applicant Details
+                    </a>
+                </div>
+            </div>
+
+            <!-- Footer Section -->
+            <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #888;">
+                <p style="margin: 0;">This is an automated message from the Aloha Security Management System.</p>
+                <p style="margin: 5px 0 0 0;">&copy; 2025 Aloha Security Agency. All Rights Reserved.</p>
+            </div>
+        </div>
         `,
       }),
     })
