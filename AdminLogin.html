@@ -12,6 +12,7 @@
     <div class="login-container">
         <div class="login-panel branding-panel">
             <div class="branding-content">
+                <!-- Siguraduhin na tama ang path ng logo -->
                 <img src="Resources/logo.jpg" alt="Aloha Security Agency Logo" class="logo" style="width: 100px; border-radius: 50%;">
                 <h1>Welcome, Administrator</h1>
                 <p>Your command center for managing professional security services.</p>
@@ -100,10 +101,10 @@
                     loginAttempts++;
                     localStorage.setItem('loginAttempts', loginAttempts);
 
-                    let cooldownDuration = 0; // in seconds
+                    let cooldownDuration = 0;
                     if (loginAttempts === 3) cooldownDuration = 30;
-                    else if (loginAttempts === 4) cooldownDuration = 60; // 1 minute
-                    else if (loginAttempts >= 5) cooldownDuration = 300; // 5 minutes
+                    else if (loginAttempts === 4) cooldownDuration = 60;
+                    else if (loginAttempts >= 5) cooldownDuration = 300;
 
                     if (cooldownDuration > 0) {
                         cooldownUntil = Date.now() + cooldownDuration * 1000;
@@ -116,7 +117,8 @@
                     localStorage.removeItem('loginAttempts');
                     localStorage.removeItem('cooldownUntil');
                     
-                    // FIXED REDIRECTION: Path matches main-dashboard.html
+                    // FIXED REDIRECTION: Dito tayo nagka-error. Dapat 'dashboard.html' 
+                    // dahil iyon ang filename mo sa GitHub.
                     window.location.href = 'dashboard.html';
                 }
             } catch (error) {
