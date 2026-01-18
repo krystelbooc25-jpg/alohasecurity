@@ -16,7 +16,7 @@
 </head>
 <body class="sidebar-is-full">
 
-    <!-- 1. GLOBAL FULL-SCREEN IMAGE VIEWER (Highest Priority Z-Index) -->
+    <!-- 1. GLOBAL FULL-SCREEN IMAGE VIEWER -->
     <div id="imageViewerModal" class="modal-overlay image-viewer-overlay" onclick="closeImagePreview()">
         <div class="image-viewer-content">
             <button class="close-viewer-btn" onclick="closeImagePreview()">&times;</button>
@@ -24,15 +24,15 @@
         </div>
     </div>
 
-    <!-- 2. SIDEBAR CONTAINER (Loaded via AJAX) -->
+    <!-- 2. SIDEBAR CONTAINER (AJAX Target) -->
     <div id="sidebar-container"></div>
 
-    <!-- 3. MAIN LAYOUT -->
+    <!-- 3. MAIN LAYOUT AREA -->
     <main class="main-content" id="main-layout">
         
         <!-- HEADER BAR (The Topbar) -->
         <div id="header-container" class="header-bar">
-            <!-- Left Side: Menu Toggle & Title -->
+            <!-- Left Side: Menu Toggle & Page Title -->
             <div class="header-left">
                 <button class="menu-toggle" onclick="window.toggleSidebar()">
                     <i class="fas fa-bars"></i>
@@ -40,7 +40,7 @@
                 <h3 id="current-title">DASHBOARD</h3>
             </div>
 
-            <!-- Right Side: Facebook Style Notifications & Profile -->
+            <!-- Right Side: Notifications & Profile -->
             <div class="header-right">
                 <div class="notification-wrapper">
                     <div class="notif-bell-container" onclick="window.toggleNotifDropdown(event)">
@@ -55,8 +55,8 @@
                             <button class="notif-mark-read" onclick="markAllAsRead(event)">Mark all as read</button>
                         </div>
                         <div id="notif-items-list" class="notif-items-list">
-                            <!-- Items injected via dashboard.js: handleNotifClick() -->
-                            <div class="notif-loading">Loading notifications...</div>
+                            <!-- Items injected via dashboard.js renderNotifications() -->
+                            <div class="notif-loading">Loading...</div>
                         </div>
                     </div>
                 </div>
@@ -74,15 +74,15 @@
 
         <!-- CONTENT BODY (Target for AJAX Sections: Dashboard, Applicants, etc.) -->
         <div id="main-content-area" class="content-body">
-            <!-- This area is dynamically filled. Do not put modal IDs here. -->
+            <!-- This area is dynamically filled. Do not put Modal IDs in snippets. -->
         </div>
     </main>
 
-    <!-- 4. MODALS (Placed at root to avoid clipping issues) -->
+    <!-- 4. GLOBAL MODALS (Placed at root to avoid z-index/clipping issues) -->
 
     <!-- PROFILE VIEW MODAL -->
     <div id="viewModal" class="modal-overlay">
-        <!-- Content loaded from components/profile-modal.html -->
+        <!-- Content loaded from components/profile-modal.html via openViewModal() -->
     </div>
 
     <!-- ASSIGN TO BRANCH MODAL -->
@@ -90,11 +90,11 @@
         <div class="modal-box">
             <div class="modal-icon"><i class="fas fa-map-marker-alt"></i></div>
             <h2>Assign to Branch</h2>
-            <p id="assign-applicant-name"></p>
+            <p id="assign-applicant-name" style="font-weight: bold; color: var(--primary-red);"></p>
             
-            <div class="form-group">
+            <div class="form-group" style="margin-top: 20px; text-align: left;">
                 <label>Select Deployment Location</label>
-                <select id="branch-select" class="modal-input">
+                <select id="branch-select" class="modal-input" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
                     <option value="Manila Main">Manila Main</option>
                     <option value="Quezon City">Quezon City</option>
                     <option value="Makati Hub">Makati Hub</option>
@@ -103,9 +103,9 @@
                 </select>
             </div>
 
-            <div class="modal-footer">
-                <button onclick="window.closeModal('assignModal')" class="btn-secondary">Cancel</button>
-                <button id="confirmAssignBtn" class="btn-primary">Confirm Deployment</button>
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button onclick="window.closeModal('assignModal')" class="btn-secondary" style="flex:1">Cancel</button>
+                <button id="confirmAssignBtn" class="btn-primary" style="flex:2">Confirm Deployment</button>
             </div>
         </div>
     </div>
@@ -115,10 +115,10 @@
         <div class="modal-box">
             <div id="modalIcon" class="modal-icon"><i class="fas fa-exclamation-circle"></i></div>
             <h2 id="modalTitle">Confirm Action</h2>
-            <p id="modalText"></p>
-            <div class="modal-footer">
-                <button id="cancelBtn" class="btn-secondary">Cancel</button>
-                <button id="confirmBtn" class="btn-primary">Confirm</button>
+            <p id="modalText" style="color: #666; margin-top: 10px;"></p>
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button id="cancelBtn" class="btn-secondary" style="flex:1">Cancel</button>
+                <button id="confirmBtn" class="btn-primary" style="flex:1">Confirm</button>
             </div>
         </div>
     </div>
@@ -129,18 +129,20 @@
             <h2 style="color: var(--primary-red); margin-bottom: 20px;">Manual Add Guard</h2>
             <div class="form-group" style="text-align: left;">
                 <label>First Name</label>
-                <input type="text" id="m_first_name" placeholder="John">
+                <input type="text" id="m_first_name" placeholder="John" style="width:100%; margin-bottom:12px; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                
                 <label>Last Name</label>
-                <input type="text" id="m_last_name" placeholder="Doe">
+                <input type="text" id="m_last_name" placeholder="Doe" style="width:100%; margin-bottom:12px; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                
                 <label>Position</label>
-                <select id="m_position">
+                <select id="m_position" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
                     <option value="Security Guard">Security Guard</option>
                     <option value="Security Supervisor">Security Supervisor</option>
                 </select>
             </div>
-            <div class="modal-footer" style="margin-top: 20px;">
-                <button onclick="window.closeModal('manualAddModal')" class="btn-secondary">Cancel</button>
-                <button onclick="window.saveManualEmployee()" class="btn-primary">Save Guard</button>
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button onclick="window.closeModal('manualAddModal')" class="btn-secondary" style="flex:1">Cancel</button>
+                <button onclick="window.saveManualEmployee()" class="btn-primary" style="flex:2">Save Guard</button>
             </div>
         </div>
     </div>
