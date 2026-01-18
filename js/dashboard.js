@@ -21,7 +21,7 @@ async function loadComponents() {
         document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
         document.getElementById('header-container').innerHTML = await headerRes.text();
 
-        // Attach functions to window so they are globally accessible
+        // I-expose ang functions sa global window para sa AJAX buttons
         window.loadSection = loadSection;
         window.switchTab = switchTab;
         window.toggleSidebar = toggleSidebar;
@@ -30,14 +30,17 @@ async function loadComponents() {
         window.handleLogout = handleLogout;
 
         applySavedSidebarState();
+        
+        // Unahin ang pag-fetch ng data bago i-load ang dashboard
+        await fetchData(); 
         await loadSection('dashboard');
-        fetchData();
+        
     } catch (error) {
         console.error("Error loading components:", error);
     }
 }
 
-// --- 3. THE NAVIGATION ENGINE ---
+// --- 3. SECTION LOADER (AJAX Content) ---
 async function loadSection(sectionName) {
     if (isAnimating) return;
     const target = document.getElementById('main-content-area');
@@ -77,16 +80,32 @@ async function loadSection(sectionName) {
     }, 400);
 }
 
-// --- 4. DATA LOGIC ---
+// --- 4. DATA FETCHING ---
 async function fetchData() {
     const { data, error } = await _supabase.from('applicants').select('*').order('created_at', { ascending: false });
-    if (error) return console.error(error);
+    if (error) {
+        console.error("Supabase Error:", error.message);
+        return;
+    }
     
     masterData = data;
+
+    // Auto-delete Rejected items after 3 days
+    const now = new Date();
+    const trashItems = masterData.filter(a => a.status?.toLowerCase() === 'rejected');
+    for (let item of trashItems) {
+        const rejectedDate = new Date(item.updated_at || item.created_at);
+        const diffDays = Math.ceil((now - rejectedDate) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 3) {
+            await _supabase.from('applicants').delete().eq('id', item.id);
+        }
+    }
+
     renderCurrentTab();
     updateGlobalUI(); 
 }
 
+// --- 5. UI DISPATCHER ---
 function renderCurrentTab() {
     if (currentTab === 'dashboard') {
         renderDashboardStats();
@@ -100,7 +119,7 @@ function renderCurrentTab() {
     }
 }
 
-// --- 5. UI UPDATERS (MGA NAWALA NA FUNCTIONS) ---
+// --- 6. CORE RENDERING FUNCTIONS ---
 
 function renderDashboardStats() {
     const total = document.getElementById('stat-total');
@@ -116,9 +135,7 @@ function renderTableRows() {
     const tbody = document.getElementById('applicant-table-body');
     if (!tbody) return;
 
-    // Filter out Rejected applicants for the main table
     const activeData = masterData.filter(a => a.status !== 'Rejected');
-
     tbody.innerHTML = activeData.map(app => `
         <tr>
             <td style="padding-left: 20px;">
@@ -127,9 +144,7 @@ function renderTableRows() {
             </td>
             <td>${app.desired_position}</td>
             <td><span class="badge ${app.status.toLowerCase()}">${app.status}</span></td>
-            <td>
-                <button onclick="openViewModal('${app.id}')" class="btn-hire">View Details</button>
-            </td>
+            <td><button onclick="openViewModal('${app.id}')" class="btn-hire">View</button></td>
         </tr>
     `).join('') || '<tr><td colspan="4" style="text-align:center; padding:20px;">No applicants found.</td></tr>';
 }
@@ -139,21 +154,21 @@ function renderCharts() {
     const ctx2 = document.getElementById('statusChart');
     if (!ctx1 || !ctx2) return;
 
-    // Branch Distribution Chart
+    // Personnel by Branch
     new Chart(ctx1, {
         type: 'bar',
         data: {
             labels: branchOptions,
             datasets: [{
                 label: 'Guards Deployed',
-                data: branchOptions.map(b => masterData.filter(a => a.assigned_branch === b).length),
+                data: branchOptions.map(b => masterData.filter(a => a.assigned_branch === b && a.status === 'Approved').length),
                 backgroundColor: '#D2042D'
             }]
         },
         options: { maintainAspectRatio: false }
     });
 
-    // Status Doughnut Chart
+    // Status Distribution
     new Chart(ctx2, {
         type: 'doughnut',
         data: {
@@ -180,10 +195,10 @@ function renderAccordions() {
             <div class="branch-accordion">
                 <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('active')">
                     <span><i class="fas fa-building"></i> ${branch}</span>
-                    <span>${guards.length} Guards Deployed <i class="fas fa-chevron-down"></i></span>
+                    <span>${guards.length} Guards <i class="fas fa-chevron-down"></i></span>
                 </div>
                 <div class="accordion-content">
-                    ${guards.map(g => `<div class="guard-row"><span>${g.first_name} ${g.last_name}</span></div>`).join('') || '<p style="padding:10px; color:#ccc;">No guards assigned.</p>'}
+                    ${guards.map(g => `<div class="guard-row"><span>${g.first_name} ${g.last_name}</span></div>`).join('') || 'Empty'}
                 </div>
             </div>`;
     }).join('');
@@ -198,19 +213,27 @@ function renderTrashBin() {
             <td>${app.first_name} ${app.last_name}</td>
             <td><span class="badge rejected">Rejected</span></td>
             <td><button class="btn-secondary" onclick="restoreApplicant('${app.id}')">Restore</button></td>
-        </tr>`).join('') || '<tr><td colspan="3" style="text-align:center; padding:20px;">Trash Bin is empty.</td></tr>';
+        </tr>`).join('') || '<tr><td colspan="3" style="text-align:center; padding:20px;">Trash is empty</td></tr>';
 }
 
-// --- 6. UTILS & ACTIONS ---
+// --- 7. UTILITIES & ACTIONS ---
+
 function updateSidebarUI(name) {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
-        if (item.getAttribute('onclick')?.includes(name)) {
-            item.classList.add('active');
-        }
+        if (item.getAttribute('onclick')?.includes(name)) item.classList.add('active');
     });
     const title = document.getElementById('current-title');
     if (title) title.innerText = name.toUpperCase();
+}
+
+function updateGlobalUI() {
+    const badge = document.getElementById('notif-badge');
+    const pendingCount = masterData.filter(a => a.status === 'Pending').length;
+    if (badge) {
+        badge.innerText = pendingCount;
+        badge.style.display = pendingCount > 0 ? 'flex' : 'none';
+    }
 }
 
 function toggleSidebar() {
@@ -236,23 +259,12 @@ function toggleNotifDropdown(e) {
     document.getElementById('notif-dropdown')?.classList.toggle('active');
 }
 
-function closeModal(id) {
-    document.getElementById(id)?.classList.remove('active');
-}
-
-function updateGlobalUI() {
-    const badge = document.getElementById('notif-badge');
-    if (badge) {
-        const count = masterData.filter(a => a.status === 'Pending').length;
-        badge.innerText = count;
-        badge.style.display = count > 0 ? 'flex' : 'none';
-    }
-}
+function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
 
 async function handleLogout() {
     await _supabase.auth.signOut();
     window.location.href = 'AdminLogin.html';
 }
 
-// Start the Dashboard
+// Start
 loadComponents();
