@@ -180,60 +180,42 @@
 }
 </style>
 <div class="modal-box-lg animate-in">
-    <!-- Header -->
     <div class="p-modal-header">
         <div class="p-user-meta">
             <div class="p-avatar"><i class="fas fa-user-shield"></i></div>
             <div class="p-title-group">
-                <h2 id="v-full-name">Loading...</h2>
+                <h2 id="v-full-name"></h2>
                 <p id="v-position"></p>
             </div>
         </div>
-        <button id="v-resume-btn" class="btn-resume-link">
-            <i class="fas fa-file-pdf"></i> View Resume
-        </button>
+        <button id="v-resume-btn" class="btn-resume-link">View Resume</button>
     </div>
-
-    <!-- Body -->
     <div class="p-modal-body">
-        <!-- Top Section: Profile Info (Full Width) -->
-        <div class="p-section">
-            <h4 class="p-sec-title"><i class="fas fa-info-circle"></i> Profile Information</h4>
-            <div class="p-info-grid">
-                <div class="p-item"><strong>Email:</strong> <span id="v-email"></span></div>
-                <div class="p-item"><strong>Phone:</strong> <span id="v-phone"></span></div>
-                <div class="p-item"><strong>Birthday:</strong> <span id="v-dob"></span></div>
-                <div class="p-item"><strong>Salary:</strong> <span id="v-salary"></span></div>
-            </div>
+        <div class="p-info-grid">
+            <div class="p-item"><strong>Email:</strong> <span id="v-email"></span></div>
+            <div class="p-item"><strong>Phone:</strong> <span id="v-phone"></span></div>
+            <div class="p-item"><strong>Birthday:</strong> <span id="v-dob"></span></div>
+            <div class="p-item"><strong>Salary:</strong> <span id="v-salary"></span></div>
         </div>
-
-        <!-- Bottom Section: Two Column Split -->
         <div class="p-split-grid">
-            <!-- Left Side: Documents -->
             <div class="p-column">
-                <h4 class="p-sec-title"><i class="fas fa-id-card"></i> Documents</h4>
-                <p style="font-size:13px; margin-bottom:10px;"><strong>ID Type:</strong> <span id="v-id-type"></span></p>
+                <h4 class="p-sec-title">Documents</h4>
+                <p><strong>ID Type:</strong> <span id="v-id-type"></span></p>
                 <div class="p-image-frame">
-                    <div class="p-image-frame" style="cursor: zoom-in;" onclick="openImagePreview(document.getElementById('v-id-img').src)">
-                        <img id="v-id-img" src="" alt="Valid ID">
-                    </div>
+                    <img id="v-id-img" src="" alt="ID Photo">
                 </div>
             </div>
-
-            <!-- Right Side: Experience -->
             <div class="p-column">
-                <h4 class="p-sec-title"><i class="fas fa-history"></i> Experience</h4>
+                <h4 class="p-sec-title">Experience</h4>
                 <div id="v-experience" class="p-exp-box"></div>
             </div>
         </div>
     </div>
-
-    <!-- Actions -->
     <div class="p-modal-footer">
         <button onclick="window.closeModal('viewModal')" class="btn-secondary">Close</button>
         <div class="p-action-group">
-            <button id="v-reject-btn" class="btn-refuse"><i class="fas fa-times"></i> Reject Applicant</button>
-            <button id="v-approve-btn" class="btn-hire"><i class="fas fa-check"></i> Approve & Deploy</button>
+            <button id="v-reject-btn" class="btn-refuse">Reject</button>
+            <button id="v-approve-btn" class="btn-hire">Approve & Deploy</button>
         </div>
     </div>
 </div>
