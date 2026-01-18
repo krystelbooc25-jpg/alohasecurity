@@ -4,88 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aloha Security | Admin Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <!-- External Libraries -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- CSS Files -->
     <link rel="stylesheet" href="main-dashboard.css">
+    <!-- NEW: Profile Modal Specific Styling -->
     <link rel="stylesheet" href="css/profile-modal.css"> 
 </head>
 <body class="sidebar-is-full">
-
-    <!-- 1. GLOBAL FULL-SCREEN IMAGE VIEWER -->
-    <div id="imageViewerModal" class="modal-overlay image-viewer-overlay" onclick="closeImagePreview()">
-        <div class="image-viewer-content">
-            <button class="close-viewer-btn" onclick="closeImagePreview()">&times;</button>
-            <img id="full-preview-img" src="" alt="Full Preview">
-        </div>
+    <!-- GLOBAL FULL-SCREEN IMAGE VIEWER -->
+<div id="imageViewerModal" class="modal-overlay image-viewer-overlay" onclick="closeImagePreview()">
+    <div class="image-viewer-content">
+        <button class="close-viewer-btn">&times;</button>
+        <img id="full-preview-img" src="" alt="Full Preview">
     </div>
+</div>
 
-    <!-- 2. SIDEBAR CONTAINER (AJAX Target) -->
     <div id="sidebar-container"></div>
 
-    <!-- 3. MAIN LAYOUT AREA -->
     <main class="main-content" id="main-layout">
-        
-        <!-- HEADER BAR (The Topbar) -->
         <div id="header-container" class="header-bar">
-            <!-- Left Side: Menu Toggle & Page Title -->
+            <!-- Left Side: Title & Menu Toggle -->
             <div class="header-left">
-                <button class="menu-toggle" onclick="window.toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
+                <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
                 <h3 id="current-title">DASHBOARD</h3>
             </div>
 
-            <!-- Right Side: Notifications & Profile -->
+            <!-- Right Side: Icons -->
             <div class="header-right">
                 <div class="notification-wrapper">
-                    <div class="notif-bell-container" onclick="window.toggleNotifDropdown(event)">
-                        <i class="fas fa-bell notification-bell"></i>
-                        <span id="notif-badge" class="notification-badge" style="display: none;">0</span>
-                    </div>
-                    
-                    <!-- NOTIFICATION DROPDOWN (Facebook Style) -->
+                    <i class="fas fa-bell notification-bell" onclick="window.toggleNotifDropdown(event)"></i>
+                    <span id="notif-badge" class="notification-badge">0</span>
                     <div id="notif-dropdown" class="notif-dropdown">
-                        <div class="notif-header">
-                            <span>Notifications</span>
-                            <button class="notif-mark-read" onclick="markAllAsRead(event)">Mark all as read</button>
-                        </div>
-                        <div id="notif-items-list" class="notif-items-list">
-                            <!-- Items injected via dashboard.js renderNotifications() -->
-                            <div class="notif-loading">Loading...</div>
-                        </div>
+                        <div class="notif-header">Notifications</div>
+                        <div id="notif-items-list"></div>
                     </div>
                 </div>
-
                 <div class="admin-profile">
-                    <div class="admin-info">
-                        <span class="admin-label">SYSTEM ADMIN</span>
-                    </div>
-                    <div class="admin-avatar">
-                        <i class="fas fa-user-shield"></i>
-                    </div>
+                    <span class="admin-label">Admin</span>
+                    <div class="admin-avatar"><i class="fas fa-user-shield"></i></div>
                 </div>
             </div>
         </div>
 
-        <!-- CONTENT BODY (Target for AJAX Sections: Dashboard, Applicants, etc.) -->
         <div id="main-content-area" class="content-body">
-            <!-- This area is dynamically filled. Do not put Modal IDs in snippets. -->
+            <!-- AJAX CONTENT LOADS HERE -->
+             <div id="viewModal" class="modal-overlay"></div>
+             <div id="assignModal" class="modal-overlay"></div>
         </div>
     </main>
 
-    <!-- 4. GLOBAL MODALS (Placed at root to avoid z-index/clipping issues) -->
-
-    <!-- PROFILE VIEW MODAL -->
+    <!-- NEW: PROFILE VIEW MODAL (AJAX Target) -->
     <div id="viewModal" class="modal-overlay">
-        <!-- Content loaded from components/profile-modal.html via openViewModal() -->
+        <!-- The content from components/profile-modal.html will be injected here via JS -->
     </div>
 
-    <!-- ASSIGN TO BRANCH MODAL -->
+    <!-- GLOBAL MODAL: ASSIGN TO BRANCH -->
     <div id="assignModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-icon"><i class="fas fa-map-marker-alt"></i></div>
@@ -94,7 +72,7 @@
             
             <div class="form-group" style="margin-top: 20px; text-align: left;">
                 <label>Select Deployment Location</label>
-                <select id="branch-select" class="modal-input" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                <select id="branch-select" class="modal-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
                     <option value="Manila Main">Manila Main</option>
                     <option value="Quezon City">Quezon City</option>
                     <option value="Makati Hub">Makati Hub</option>
@@ -104,18 +82,19 @@
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <!-- Close using global closeModal function -->
                 <button onclick="window.closeModal('assignModal')" class="btn-secondary" style="flex:1">Cancel</button>
                 <button id="confirmAssignBtn" class="btn-primary" style="flex:2">Confirm Deployment</button>
             </div>
         </div>
     </div>
 
-    <!-- GLOBAL DELETE/CONFIRM MODAL -->
+    <!-- Global Delete/Confirm Modal -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-box">
             <div id="modalIcon" class="modal-icon"><i class="fas fa-exclamation-circle"></i></div>
             <h2 id="modalTitle">Confirm Action</h2>
-            <p id="modalText" style="color: #666; margin-top: 10px;"></p>
+            <p id="modalText"></p>
             <div style="display: flex; gap: 10px; margin-top: 25px;">
                 <button id="cancelBtn" class="btn-secondary" style="flex:1">Cancel</button>
                 <button id="confirmBtn" class="btn-primary" style="flex:1">Confirm</button>
@@ -123,32 +102,7 @@
         </div>
     </div>
 
-    <!-- MANUAL ADD EMPLOYEE MODAL -->
-    <div id="manualAddModal" class="modal-overlay">
-        <div class="modal-box">
-            <h2 style="color: var(--primary-red); margin-bottom: 20px;">Manual Add Guard</h2>
-            <div class="form-group" style="text-align: left;">
-                <label>First Name</label>
-                <input type="text" id="m_first_name" placeholder="John" style="width:100%; margin-bottom:12px; padding:10px; border-radius:8px; border:1px solid #ddd;">
-                
-                <label>Last Name</label>
-                <input type="text" id="m_last_name" placeholder="Doe" style="width:100%; margin-bottom:12px; padding:10px; border-radius:8px; border:1px solid #ddd;">
-                
-                <label>Position</label>
-                <select id="m_position" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
-                    <option value="Security Guard">Security Guard</option>
-                    <option value="Security Supervisor">Security Supervisor</option>
-                </select>
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button onclick="window.closeModal('manualAddModal')" class="btn-secondary" style="flex:1">Cancel</button>
-                <button onclick="window.saveManualEmployee()" class="btn-primary" style="flex:2">Save Guard</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. JAVASCRIPT LOGIC -->
+    <!-- Main Logic -->
     <script src="js/dashboard.js"></script>
-
 </body>
 </html>
