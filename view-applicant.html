@@ -96,7 +96,7 @@
     <div class="container">
         <header class="page-header">
             <div class="header-left" style="display:flex; align-items:center; gap:15px;">
-                <a href="dashboard.html" class="back-link" style="text-decoration:none; color:inherit;"><i class="fas fa-arrow-left"></i> Dashboard</a>
+                <a href="main-dashboard.html" class="back-link" style="text-decoration:none; color:inherit;"><i class="fas fa-arrow-left"></i> Dashboard</a>
                 <h1 style="color:var(--primary-red);">Applicant Details</h1>
             </div>
         </header>
@@ -221,7 +221,7 @@
             } else {
                 console.log("Update success:", data);
                 alert("Applicant has been " + newStatus);
-                window.location.href = 'dashboard.html';
+                window.location.href = 'main-dashboard.html';
             }
         }
 
@@ -250,7 +250,7 @@
             } else {
                 console.log("Approval success:", data);
                 alert("Applicant Approved and Deployed!");
-                window.location.href = 'dashboard.html';
+                window.location.href = 'main-dashboard.html';
             }
         }
 

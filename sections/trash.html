@@ -1,0 +1,15 @@
+<div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h4 style="color: #444; font-weight: 800;">Trash Bin</h4>
+        <p style="color: #888; font-size: 0.9rem;">Review applications marked as Rejected. (Auto-deletes in 3 days)</p>
+    </div>
+    
+    <button id="bulk-delete-btn" class="btn-bulk-delete" onclick="bulkDeleteTrash()">
+        <i class="fas fa-fire"></i> Delete Selected
+    </button>
+</div>
+
+<!-- This card container will switch between the table and the sad bin image -->
+<div class="card" id="trash-card-content">
+    <!-- Content injected by renderTrashBin() -->
+</div>
