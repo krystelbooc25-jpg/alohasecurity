@@ -10,14 +10,12 @@ let currentTabIndex = 0;
 let isAnimating = false;
 const branchOptions = ["Manila Main", "Quezon City", "Makati Hub", "Davao Branch", "Cebu Office"];
 
-// Pagination State
 let currentPage = 1;
 const itemsPerPage = 6;
 
 // --- 2. INITIALIZATION ---
 async function loadComponents() {
     try {
-        // Load Sidebar & Header into the main shell
         const [sidebarRes, headerRes] = await Promise.all([
             fetch('components/sidebar.html'),
             fetch('components/header.html')
@@ -26,21 +24,16 @@ async function loadComponents() {
         document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
         document.getElementById('header-container').innerHTML = await headerRes.text();
 
-        // Re-apply rail state and active classes to Topbar/Content
         applySavedSidebarState();
-
-        // Default: Load the Dashboard section first
         await loadSection('dashboard');
-        
-        // Initial data fetch
         fetchData();
     } catch (error) {
         console.error("Error loading shell components:", error);
     }
 }
 
-// --- 3. SECTION LOADER (AJAX with Carousel Animation) ---
-async function loadSection(sectionName) {
+// --- 3. SECTION LOADER ---
+window.loadSection = async function(sectionName) {
     if (isAnimating) return;
     const target = document.getElementById('main-content-area');
     if (!target) return;
@@ -62,7 +55,7 @@ async function loadSection(sectionName) {
 
             currentTab = sectionName;
             currentTabIndex = newIndex;
-            currentPage = 1; // Reset pagination on tab switch
+            currentPage = 1; 
             
             updateSidebarUI(sectionName);
             renderCurrentTab();
@@ -86,7 +79,6 @@ async function fetchData() {
     
     masterData = data;
     
-    // Auto-delete Rejected items after 3 days
     const now = new Date();
     const trashItems = masterData.filter(a => a.status?.toLowerCase() === 'rejected');
     for (let item of trashItems) {
@@ -115,16 +107,13 @@ function renderCurrentTab() {
     }
 }
 
-// --- 6. FACEBOOK STYLE NOTIFICATIONS ---
+// --- 6. NOTIFICATIONS ---
 function renderNotifications() {
     const list = document.getElementById('notif-items-list');
     const badge = document.getElementById('notif-badge');
     if (!list || !badge) return;
 
-    // Filter all PENDING review applicants
     const pendingReview = masterData.filter(a => a.status === 'Pending');
-    
-    // Badge shows only UNREAD count
     const unreadCount = pendingReview.filter(a => !a.is_read).length;
     badge.innerText = unreadCount;
     badge.style.display = unreadCount > 0 ? 'flex' : 'none';
@@ -134,168 +123,166 @@ function renderNotifications() {
         return;
     }
 
-    list.innerHTML = pendingReview.map(app => {
-        const isUnread = !app.is_read;
-        return `
-            <div class="notif-item ${isUnread ? 'unread' : ''}" onclick="handleNotifClick('${app.id}', event)">
-                <div class="notif-avatar">${app.first_name[0]}</div>
-                <div class="notif-content">
-                    <strong>${app.first_name} ${app.last_name}</strong>
-                    <p>Applied for <b>${app.desired_position}</b></p>
-                </div>
-                ${isUnread ? '<div class="unread-dot"></div>' : ''}
-            </div>`;
-    }).join('');
+    list.innerHTML = pendingReview.map(app => `
+        <div class="notif-item ${!app.is_read ? 'unread' : ''}" onclick="handleNotifClick('${app.id}', event)">
+            <div class="notif-avatar">${app.first_name[0]}</div>
+            <div class="notif-content">
+                <strong>${app.first_name} ${app.last_name}</strong>
+                <p>Applied for <b>${app.desired_position}</b></p>
+            </div>
+            ${!app.is_read ? '<div class="unread-dot"></div>' : ''}
+        </div>`).join('');
 }
 
 async function handleNotifClick(id, event) {
-    // Mark as read in Supabase
     await _supabase.from('applicants').update({ is_read: true }).eq('id', id);
     await fetchData();
-    // Go to applicants tab
-    switchTab('applicants-tab');
+    window.loadSection('applicants');
 }
 
-// --- 7. CORE TABLE RENDERING (With Pagination Fix) ---
+// --- 7. CORE TABLE RENDERING ---
 function renderTableRows(list) {
     const tbody = document.getElementById('applicant-table-body');
     if (!tbody) return;
 
     const activeData = list.filter(a => a.status?.toLowerCase() !== 'rejected');
-    
-    // Pagination Calculation
     const totalItems = activeData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const startIdx = (currentPage - 1) * itemsPerPage;
-    const paginatedItems = activeData.slice(startIdx, startIdx + itemsPerPage);
+    const paginatedItems = activeData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-    // Update Pagination Text (Fixes Showing 0 to 0)
-    const startEl = document.getElementById('page-start');
-    const endEl = document.getElementById('page-end');
-    const totalEl = document.getElementById('page-total');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
-
-    if (startEl) startEl.innerText = totalItems === 0 ? 0 : startIdx + 1;
-    if (endEl) endEl.innerText = Math.min(startIdx + itemsPerPage, totalItems);
-    if (totalEl) totalEl.innerText = totalItems;
+    document.getElementById('page-start').innerText = totalItems === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1;
+    document.getElementById('page-end').innerText = Math.min(currentPage * itemsPerPage, totalItems);
+    document.getElementById('page-total').innerText = totalItems;
     
-    if (prevBtn) prevBtn.disabled = currentPage === 1;
-    if (nextBtn) nextBtn.disabled = currentPage >= totalPages || totalPages === 0;
+    document.getElementById('prev-page').disabled = currentPage === 1;
+    document.getElementById('next-page').disabled = currentPage >= totalPages || totalPages === 0;
 
-    if (paginatedItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:50px; color:#aaa;">No applicants found.</td></tr>`;
-        return;
-    }
+    tbody.innerHTML = paginatedItems.map(app => `
+        <tr>
+            <td style="padding-left: 25px;">
+                <div style="font-weight: 700; color: #2d3436;">${app.first_name} ${app.last_name}</div>
+                <div style="font-size: 11px; color: ${app.is_read ? '#aaa' : 'var(--primary-red)'}">
+                    ${app.is_read ? 'Reviewing' : '● New Application'}
+                </div>
+            </td>
+            <td><span class="badge-pos">${app.desired_position}</span></td>
+            <td><span class="badge ${app.status.toLowerCase()}">${app.status}</span></td>
+            <td style="text-align: center;">
+                <div style="display: flex; justify-content: center; gap: 8px;">
+                    <button class="btn-hire" onclick="openViewModal('${app.id}')"><i class="fas fa-user-check"></i> Hire</button>
+                    <button class="btn-refuse" onclick="rejectApplicant('${app.id}')"><i class="fas fa-times"></i></button>
+                </div>
+            </td>
+        </tr>`).join('');
+}
 
-    tbody.innerHTML = paginatedItems.map(app => {
-        const fullName = `${app.first_name} ${app.last_name}`;
+window.changePage = (dir) => { currentPage += dir; renderTableRows(masterData); };
+
+// --- 8. MISSING LOGIC FUNCTIONS (IMPLEMENTED) ---
+
+function renderDashboardStats() {
+    if(!document.getElementById('stat-total')) return;
+    document.getElementById('stat-total').innerText = masterData.length;
+    document.getElementById('stat-pending').innerText = masterData.filter(a => a.status === 'Pending').length;
+    document.getElementById('stat-approved').innerText = masterData.filter(a => a.status === 'Approved').length;
+}
+
+function renderCharts() {
+    const ctx1 = document.getElementById('branchChart');
+    const ctx2 = document.getElementById('statusChart');
+    if (!ctx1 || !ctx2) return;
+
+    // Personnel by Branch
+    new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: branchOptions,
+            datasets: [{ label: 'Guards', data: branchOptions.map(b => masterData.filter(a => a.assigned_branch === b).length), backgroundColor: '#D2042D' }]
+        }
+    });
+
+    // Status Distribution
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Approved', 'Rejected'],
+            datasets: [{ data: ['Pending', 'Approved', 'Rejected'].map(s => masterData.filter(a => a.status === s).length), backgroundColor: ['#f39c12', '#2ecc71', '#e74c3c'] }]
+        }
+    });
+}
+
+function renderAccordions() {
+    const container = document.getElementById('branch-accordion-container');
+    if (!container) return;
+    container.innerHTML = branchOptions.map(branch => {
+        const guards = masterData.filter(a => a.assigned_branch === branch && a.status === 'Approved');
         return `
-            <tr>
-                <td style="padding-left: 25px;">
-                    <div style="font-weight: 700; color: #2d3436;">${fullName}</div>
-                    <div style="font-size: 11px; color: ${app.is_read ? '#aaa' : 'var(--primary-red)'}">
-                        ${app.is_read ? 'Reviewing' : '● New Application'}
-                    </div>
-                </td>
-                <td><span style="background:#f1f2f6; padding:4px 10px; border-radius:6px; font-size:12px;">${app.desired_position}</span></td>
-                <td><span class="badge ${app.status.toLowerCase()}">${app.status}</span></td>
-                <td style="text-align: center;">
-                    <div style="display: flex; justify-content: center; gap: 8px;">
-                        <button class="btn-hire" onclick="openViewModal('${app.id}')">
-                            <i class="fas fa-user-check"></i> Hire
-                        </button>
-                        <button class="btn-refuse" onclick="rejectApplicant('${app.id}')">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
+            <div class="branch-accordion">
+                <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('active')">
+                    <span><i class="fas fa-building"></i> ${branch}</span>
+                    <span>${guards.length} Guards <i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="accordion-content">
+                    ${guards.map(g => `<div class="guard-row"><span>${g.first_name} ${g.last_name}</span></div>`).join('') || 'Empty'}
+                </div>
+            </div>`;
     }).join('');
 }
 
-function changePage(dir) {
-    currentPage += dir;
-    renderTableRows(masterData);
+function renderTrashBin() {
+    const tbody = document.getElementById('trash-table-body');
+    if (!tbody) return;
+    const trashed = masterData.filter(a => a.status === 'Rejected');
+    tbody.innerHTML = trashed.map(app => `
+        <tr>
+            <td>${app.first_name} ${app.last_name}</td>
+            <td><span class="badge rejected">Rejected</span></td>
+            <td><button class="btn-primary" onclick="restoreApplicant('${app.id}')">Restore</button></td>
+        </tr>`).join('') || '<tr><td colspan="3" style="text-align:center">Trash is empty</td></tr>';
 }
 
-// --- 8. MODALS & HIRING LOGIC ---
-
-async function openViewModal(id) {
-    const app = masterData.find(a => a.id === id);
-    if (!app) return;
-
-    try {
-        const res = await fetch('components/profile-modal.html');
-        const container = document.getElementById('viewModal');
-        container.innerHTML = await res.text();
-        container.classList.add('active');
-
-        // Populate Profile Data
-        document.getElementById('v-full-name').innerText = `${app.first_name} ${app.last_name}`;
-        document.getElementById('v-position').innerText = `Applying for: ${app.desired_position}`;
-        document.getElementById('v-email').innerText = app.email;
-        document.getElementById('v-phone').innerText = app.phone || 'N/A';
-        document.getElementById('v-dob').innerText = app.dob;
-        document.getElementById('v-salary').innerText = app.salary_range || 'N/A';
-        document.getElementById('v-id-type').innerText = app.id_type || 'N/A';
-        document.getElementById('v-experience').innerText = app.security_experience || "No experience listed.";
-        document.getElementById('v-id-img').src = app.valid_id_url || 'Resources/no-image.png';
-
-        // Button Listeners inside Modal
-        document.getElementById('v-resume-btn').onclick = () => window.open(app.resume_url, '_blank');
-        document.getElementById('v-reject-btn').onclick = () => { window.closeModal('viewModal'); rejectApplicant(app.id); };
-        
-        // Approve Button Logic: Transitions to Branch Assignment
-        document.getElementById('v-approve-btn').onclick = () => {
-            window.closeModal('viewModal');
-            setTimeout(() => {
-                openAssignModal(app.id, `${app.first_name} ${app.last_name}`);
-            }, 300);
-        };
-    } catch (e) { console.error("Error loading modal", e); }
-}
-
-function openAssignModal(id, name) {
-    const modal = document.getElementById('assignModal');
-    document.getElementById('assign-applicant-name').innerText = name;
+window.rejectApplicant = async function(id) {
+    const modal = document.getElementById('customModal');
+    document.getElementById('modalText').innerText = "Move this applicant to trash bin?";
     modal.classList.add('active');
-    document.getElementById('confirmAssignBtn').onclick = () => processAssignment(id);
+    
+    document.getElementById('confirmBtn').onclick = async () => {
+        const { error } = await _supabase.from('applicants').update({ status: 'Rejected', updated_at: new Date() }).eq('id', id);
+        modal.classList.remove('active');
+        if (!error) fetchData();
+    };
+    document.getElementById('cancelBtn').onclick = () => modal.classList.remove('active');
 }
 
-async function processAssignment(id) {
-    const branch = document.getElementById('branch-select').value;
-    const { error } = await _supabase.from('applicants').update({ 
-        status: 'Approved', 
-        assigned_branch: branch,
-        is_read: true,
-        updated_at: new Date() 
-    }).eq('id', id);
-
-    if (!error) {
-        window.closeModal('assignModal');
-        fetchData();
-    }
+async function restoreApplicant(id) {
+    await _supabase.from('applicants').update({ status: 'Pending' }).eq('id', id);
+    fetchData();
 }
 
-// --- 9. UTILITIES & SHELL LOGIC ---
+// --- 9. UTILITIES ---
+
+function updateSidebarUI(section) {
+    document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('active');
+        if(el.getAttribute('onclick')?.includes(section)) el.classList.add('active');
+    });
+    document.getElementById('current-title').innerText = section.toUpperCase();
+}
 
 window.toggleSidebar = () => {
     const sidebar = document.getElementById('sidebar');
     const headerBar = document.getElementById('header-container');
     const contentBody = document.getElementById('main-content-area');
-    
-    if (sidebar && headerBar && contentBody) {
+    if (sidebar) {
         sidebar.classList.toggle('rail');
-        headerBar.classList.toggle('active');
-        contentBody.classList.toggle('active');
+        headerBar?.classList.toggle('active');
+        contentBody?.classList.toggle('active');
         localStorage.setItem('sidebar_is_rail', sidebar.classList.contains('rail'));
     }
 };
 
 window.applySavedSidebarState = () => {
-    const isRail = localStorage.getItem('sidebar_is_rail') === 'true';
-    if (isRail) {
+    if (localStorage.getItem('sidebar_is_rail') === 'true') {
         document.getElementById('sidebar')?.classList.add('rail');
         document.getElementById('header-container')?.classList.add('active');
         document.getElementById('main-content-area')?.classList.add('active');
@@ -309,13 +296,13 @@ window.toggleNotifDropdown = (e) => {
 
 window.closeModal = (id) => document.getElementById(id)?.classList.remove('active');
 
+async function handleLogout() { await _supabase.auth.signOut(); window.location.href = 'AdminLogin.html'; }
+
 function updateGlobalUI() {
     renderNotifications();
-    if (currentTab === 'dashboard') renderDashboardStats();
+    renderDashboardStats();
 }
 
-// Close notif when clicking away
 document.addEventListener('click', () => document.getElementById('notif-dropdown')?.classList.remove('active'));
 
-// Start
 loadComponents();
