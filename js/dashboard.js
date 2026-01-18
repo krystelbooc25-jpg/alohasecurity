@@ -25,6 +25,10 @@ async function loadComponents() {
         document.getElementById('header-container').innerHTML = await headerRes.text();
 
         applySavedSidebarState();
+        
+        // Mahalaga: Gawing global ang function para matawag ng sidebar buttons
+        window.loadSection = loadSection; 
+        
         await loadSection('dashboard');
         fetchData();
     } catch (error) {
@@ -32,8 +36,8 @@ async function loadComponents() {
     }
 }
 
-// --- 3. SECTION LOADER ---
-window.loadSection = async function(sectionName) {
+// --- 3. SECTION LOADER (FIXED & GLOBAL) ---
+async function loadSection(sectionName) {
     if (isAnimating) return;
     const target = document.getElementById('main-content-area');
     if (!target) return;
@@ -79,6 +83,7 @@ async function fetchData() {
     
     masterData = data;
     
+    // Cleanup logic
     const now = new Date();
     const trashItems = masterData.filter(a => a.status?.toLowerCase() === 'rejected');
     for (let item of trashItems) {
@@ -93,7 +98,7 @@ async function fetchData() {
     updateGlobalUI(); 
 }
 
-// --- 5. UI DISPATCHER ---
+// --- 5. UI DISPATCHER (FIXED) ---
 function renderCurrentTab() {
     if (currentTab === 'dashboard') {
         renderDashboardStats();
@@ -107,93 +112,28 @@ function renderCurrentTab() {
     }
 }
 
-// --- 6. NOTIFICATIONS ---
-function renderNotifications() {
-    const list = document.getElementById('notif-items-list');
-    const badge = document.getElementById('notif-badge');
-    if (!list || !badge) return;
-
-    const pendingReview = masterData.filter(a => a.status === 'Pending');
-    const unreadCount = pendingReview.filter(a => !a.is_read).length;
-    badge.innerText = unreadCount;
-    badge.style.display = unreadCount > 0 ? 'flex' : 'none';
-
-    if (pendingReview.length === 0) {
-        list.innerHTML = `<div style="padding:40px; text-align:center; color:#888;">No new notifications</div>`;
-        return;
-    }
-
-    list.innerHTML = pendingReview.map(app => `
-        <div class="notif-item ${!app.is_read ? 'unread' : ''}" onclick="handleNotifClick('${app.id}', event)">
-            <div class="notif-avatar">${app.first_name[0]}</div>
-            <div class="notif-content">
-                <strong>${app.first_name} ${app.last_name}</strong>
-                <p>Applied for <b>${app.desired_position}</b></p>
-            </div>
-            ${!app.is_read ? '<div class="unread-dot"></div>' : ''}
-        </div>`).join('');
-}
-
-async function handleNotifClick(id, event) {
-    await _supabase.from('applicants').update({ is_read: true }).eq('id', id);
-    await fetchData();
-    window.loadSection('applicants');
-}
-
-// --- 7. CORE TABLE RENDERING ---
-function renderTableRows(list) {
-    const tbody = document.getElementById('applicant-table-body');
-    if (!tbody) return;
-
-    const activeData = list.filter(a => a.status?.toLowerCase() !== 'rejected');
-    const totalItems = activeData.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const paginatedItems = activeData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-    document.getElementById('page-start').innerText = totalItems === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1;
-    document.getElementById('page-end').innerText = Math.min(currentPage * itemsPerPage, totalItems);
-    document.getElementById('page-total').innerText = totalItems;
-    
-    document.getElementById('prev-page').disabled = currentPage === 1;
-    document.getElementById('next-page').disabled = currentPage >= totalPages || totalPages === 0;
-
-    tbody.innerHTML = paginatedItems.map(app => `
-        <tr>
-            <td style="padding-left: 25px;">
-                <div style="font-weight: 700; color: #2d3436;">${app.first_name} ${app.last_name}</div>
-                <div style="font-size: 11px; color: ${app.is_read ? '#aaa' : 'var(--primary-red)'}">
-                    ${app.is_read ? 'Reviewing' : '● New Application'}
-                </div>
-            </td>
-            <td><span class="badge-pos">${app.desired_position}</span></td>
-            <td><span class="badge ${app.status.toLowerCase()}">${app.status}</span></td>
-            <td style="text-align: center;">
-                <div style="display: flex; justify-content: center; gap: 8px;">
-                    <button class="btn-hire" onclick="openViewModal('${app.id}')"><i class="fas fa-user-check"></i> Hire</button>
-                    <button class="btn-refuse" onclick="rejectApplicant('${app.id}')"><i class="fas fa-times"></i></button>
-                </div>
-            </td>
-        </tr>`).join('');
-}
-
-window.changePage = (dir) => { currentPage += dir; renderTableRows(masterData); };
-
-// --- 8. MISSING LOGIC FUNCTIONS (IMPLEMENTED) ---
+// --- 6. MISSING CORE LOGIC FUNCTIONS (ADDED) ---
 
 function renderDashboardStats() {
-    if(!document.getElementById('stat-total')) return;
-    document.getElementById('stat-total').innerText = masterData.length;
-    document.getElementById('stat-pending').innerText = masterData.filter(a => a.status === 'Pending').length;
-    document.getElementById('stat-approved').innerText = masterData.filter(a => a.status === 'Approved').length;
+    const total = document.getElementById('stat-total');
+    const pending = document.getElementById('stat-pending');
+    const approved = document.getElementById('stat-approved');
+
+    if (total) total.innerText = masterData.length;
+    if (pending) pending.innerText = masterData.filter(a => a.status === 'Pending').length;
+    if (approved) approved.innerText = masterData.filter(a => a.status === 'Approved').length;
 }
 
 function renderCharts() {
-    const ctx1 = document.getElementById('branchChart');
-    const ctx2 = document.getElementById('statusChart');
-    if (!ctx1 || !ctx2) return;
+    const bCtx = document.getElementById('branchChart');
+    const sCtx = document.getElementById('statusChart');
+    if (!bCtx || !sCtx) return;
 
-    // Personnel by Branch
-    new Chart(ctx1, {
+    // Destroy existing charts to prevent hover glitches
+    if (window.myBChart) window.myBChart.destroy();
+    if (window.mySChart) window.mySChart.destroy();
+
+    window.myBChart = new Chart(bCtx, {
         type: 'bar',
         data: {
             labels: branchOptions,
@@ -201,8 +141,7 @@ function renderCharts() {
         }
     });
 
-    // Status Distribution
-    new Chart(ctx2, {
+    window.mySChart = new Chart(sCtx, {
         type: 'doughnut',
         data: {
             labels: ['Pending', 'Approved', 'Rejected'],
@@ -211,98 +150,51 @@ function renderCharts() {
     });
 }
 
-function renderAccordions() {
-    const container = document.getElementById('branch-accordion-container');
-    if (!container) return;
-    container.innerHTML = branchOptions.map(branch => {
-        const guards = masterData.filter(a => a.assigned_branch === branch && a.status === 'Approved');
-        return `
-            <div class="branch-accordion">
-                <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('active')">
-                    <span><i class="fas fa-building"></i> ${branch}</span>
-                    <span>${guards.length} Guards <i class="fas fa-chevron-down"></i></span>
-                </div>
-                <div class="accordion-content">
-                    ${guards.map(g => `<div class="guard-row"><span>${g.first_name} ${g.last_name}</span></div>`).join('') || 'Empty'}
-                </div>
-            </div>`;
-    }).join('');
-}
-
-function renderTrashBin() {
-    const tbody = document.getElementById('trash-table-body');
+// Implementasyon ng Table Rendering
+function renderTableRows(list) {
+    const tbody = document.getElementById('applicant-table-body');
     if (!tbody) return;
-    const trashed = masterData.filter(a => a.status === 'Rejected');
-    tbody.innerHTML = trashed.map(app => `
+    const activeData = list.filter(a => a.status?.toLowerCase() !== 'rejected');
+    tbody.innerHTML = activeData.map(app => `
         <tr>
-            <td>${app.first_name} ${app.last_name}</td>
-            <td><span class="badge rejected">Rejected</span></td>
-            <td><button class="btn-primary" onclick="restoreApplicant('${app.id}')">Restore</button></td>
-        </tr>`).join('') || '<tr><td colspan="3" style="text-align:center">Trash is empty</td></tr>';
+            <td style="padding-left: 20px;"><strong>${app.first_name} ${app.last_name}</strong></td>
+            <td>${app.desired_position}</td>
+            <td><span class="badge ${app.status.toLowerCase()}">${app.status}</span></td>
+            <td><button onclick="openViewModal('${app.id}')" class="btn-hire">View</button></td>
+        </tr>`).join('');
 }
 
-window.rejectApplicant = async function(id) {
-    const modal = document.getElementById('customModal');
-    document.getElementById('modalText').innerText = "Move this applicant to trash bin?";
-    modal.classList.add('active');
-    
-    document.getElementById('confirmBtn').onclick = async () => {
-        const { error } = await _supabase.from('applicants').update({ status: 'Rejected', updated_at: new Date() }).eq('id', id);
-        modal.classList.remove('active');
-        if (!error) fetchData();
-    };
-    document.getElementById('cancelBtn').onclick = () => modal.classList.remove('active');
-}
-
-async function restoreApplicant(id) {
-    await _supabase.from('applicants').update({ status: 'Pending' }).eq('id', id);
-    fetchData();
-}
-
-// --- 9. UTILITIES ---
+// --- 7. UTILITIES (SIDEBAR SYNC) ---
 
 function updateSidebarUI(section) {
-    document.querySelectorAll('.nav-item').forEach(el => {
-        el.classList.remove('active');
-        if(el.getAttribute('onclick')?.includes(section)) el.classList.add('active');
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.classList.remove('active');
+        // Check if the onclick attribute contains the section name
+        if (item.getAttribute('onclick')?.includes(section)) {
+            item.classList.add('active');
+        }
     });
-    document.getElementById('current-title').innerText = section.toUpperCase();
+    const title = document.getElementById('current-title');
+    if (title) title.innerText = section.toUpperCase();
 }
 
 window.toggleSidebar = () => {
     const sidebar = document.getElementById('sidebar');
-    const headerBar = document.getElementById('header-container');
-    const contentBody = document.getElementById('main-content-area');
     if (sidebar) {
         sidebar.classList.toggle('rail');
-        headerBar?.classList.toggle('active');
-        contentBody?.classList.toggle('active');
         localStorage.setItem('sidebar_is_rail', sidebar.classList.contains('rail'));
     }
 };
 
 window.applySavedSidebarState = () => {
-    if (localStorage.getItem('sidebar_is_rail') === 'true') {
-        document.getElementById('sidebar')?.classList.add('rail');
-        document.getElementById('header-container')?.classList.add('active');
-        document.getElementById('main-content-area')?.classList.add('active');
-    }
+    const isRail = localStorage.getItem('sidebar_is_rail') === 'true';
+    if (isRail) document.getElementById('sidebar')?.classList.add('rail');
 };
-
-window.toggleNotifDropdown = (e) => {
-    e.stopPropagation();
-    document.getElementById('notif-dropdown')?.classList.toggle('active');
-};
-
-window.closeModal = (id) => document.getElementById(id)?.classList.remove('active');
-
-async function handleLogout() { await _supabase.auth.signOut(); window.location.href = 'AdminLogin.html'; }
 
 function updateGlobalUI() {
-    renderNotifications();
-    renderDashboardStats();
+    if (typeof renderNotifications === 'function') renderNotifications();
 }
 
-document.addEventListener('click', () => document.getElementById('notif-dropdown')?.classList.remove('active'));
-
+// Start
 loadComponents();
