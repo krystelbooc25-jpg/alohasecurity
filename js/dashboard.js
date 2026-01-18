@@ -10,7 +10,6 @@ let currentTabIndex = 0;
 let isAnimating = false;
 const branchOptions = ["Manila Main", "Quezon City", "Makati Hub", "Davao Branch", "Cebu Office"];
 
-// Pagination State
 let currentPage = 1;
 const itemsPerPage = 6;
 
@@ -25,16 +24,23 @@ async function loadComponents() {
         document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
         document.getElementById('header-container').innerHTML = await headerRes.text();
 
-        window.applySavedSidebarState();
-        await window.loadSection('dashboard');
+        // FIX: Attach functions to window so Sidebar buttons can see them
+        window.loadSection = loadSection;
+        window.toggleSidebar = toggleSidebar;
+        window.toggleNotifDropdown = toggleNotifDropdown;
+        window.closeModal = closeModal;
+        window.changePage = changePage;
+
+        applySavedSidebarState();
+        await loadSection('dashboard');
         fetchData();
     } catch (error) {
         console.error("Error loading shell components:", error);
     }
 }
 
-// --- 3. SECTION LOADER (GLOBAL) ---
-window.loadSection = async function(sectionName) {
+// --- 3. SECTION LOADER (FIXED) ---
+async function loadSection(sectionName) {
     if (isAnimating) return;
     const target = document.getElementById('main-content-area');
     if (!target) return;
@@ -71,7 +77,7 @@ window.loadSection = async function(sectionName) {
             target.classList.remove(`${directionClass}-out`);
         }
     }, 400);
-};
+}
 
 // --- 4. DATA FETCHING ---
 async function fetchData() {
@@ -80,6 +86,7 @@ async function fetchData() {
     
     masterData = data;
     
+    // Auto-cleanup Rejected
     const now = new Date();
     const trashItems = masterData.filter(a => a.status?.toLowerCase() === 'rejected');
     for (let item of trashItems) {
@@ -91,16 +98,16 @@ async function fetchData() {
     }
 
     renderCurrentTab();
-    updateGlobalUI(); 
+    renderNotifications();
 }
 
-// --- 5. UI DISPATCHER ---
+// --- 5. UI DISPATCHER (FIXED) ---
 function renderCurrentTab() {
     if (currentTab === 'dashboard') {
         renderDashboardStats();
         renderCharts();
     } else if (currentTab === 'applicants') {
-        renderTableRows(masterData);
+        renderTableRows();
     } else if (currentTab === 'branches') {
         renderAccordions();
     } else if (currentTab === 'trash') {
@@ -108,22 +115,34 @@ function renderCurrentTab() {
     }
 }
 
-// --- 6. CORE TABLE RENDERING ---
-function renderTableRows(list) {
+// --- 6. CORE TABLE RENDERING (FIXED NULL CHECKS) ---
+function renderTableRows() {
     const tbody = document.getElementById('applicant-table-body');
     if (!tbody) return;
 
-    const activeData = list.filter(a => a.status?.toLowerCase() !== 'rejected');
+    const activeData = masterData.filter(a => a.status?.toLowerCase() !== 'rejected');
     const totalItems = activeData.length;
-    const paginatedItems = activeData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIdx = (currentPage - 1) * itemsPerPage;
+    const paginatedItems = activeData.slice(startIdx, startIdx + itemsPerPage);
 
+    // Safeguard for pagination text
     const startEl = document.getElementById('page-start');
-    if (startEl) startEl.innerText = totalItems === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1;
+    const endEl = document.getElementById('page-end');
+    const totalEl = document.getElementById('page-total');
+    if (startEl) startEl.innerText = totalItems === 0 ? 0 : startIdx + 1;
+    if (endEl) endEl.innerText = Math.min(startIdx + itemsPerPage, totalItems);
+    if (totalEl) totalEl.innerText = totalItems;
     
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    if (prevBtn) prevBtn.disabled = currentPage === 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages || totalPages === 0;
+
     tbody.innerHTML = paginatedItems.map(app => `
         <tr>
             <td style="padding-left: 25px;">
-                <div style="font-weight: 700;">${app.first_name} ${app.last_name}</div>
+                <div style="font-weight: 700; color: #2d3436;">${app.first_name} ${app.last_name}</div>
                 <div style="font-size: 11px; color: ${app.is_read ? '#aaa' : 'var(--primary-red)'}">
                     ${app.is_read ? 'Reviewing' : '● New Application'}
                 </div>
@@ -132,19 +151,27 @@ function renderTableRows(list) {
             <td><span class="badge ${app.status.toLowerCase()}">${app.status}</span></td>
             <td style="text-align: center;">
                 <div style="display: flex; justify-content: center; gap: 8px;">
-                    <button class="btn-hire" onclick="openViewModal('${app.id}')"><i class="fas fa-user-check"></i> Hire</button>
+                    <button class="btn-hire" onclick="openViewModal('${app.id}')">Hire</button>
                     <button class="btn-refuse" onclick="rejectApplicant('${app.id}')"><i class="fas fa-times"></i></button>
                 </div>
             </td>
         </tr>`).join('');
 }
 
+function changePage(dir) {
+    currentPage += dir;
+    renderTableRows();
+}
+
 // --- 7. DASHBOARD STATS & CHARTS ---
 function renderDashboardStats() {
-    if(!document.getElementById('stat-total')) return;
-    document.getElementById('stat-total').innerText = masterData.length;
-    document.getElementById('stat-pending').innerText = masterData.filter(a => a.status === 'Pending').length;
-    document.getElementById('stat-approved').innerText = masterData.filter(a => a.status === 'Approved').length;
+    const total = document.getElementById('stat-total');
+    const pending = document.getElementById('stat-pending');
+    const approved = document.getElementById('stat-approved');
+
+    if (total) total.innerText = masterData.length;
+    if (pending) pending.innerText = masterData.filter(a => a.status === 'Pending').length;
+    if (approved) approved.innerText = masterData.filter(a => a.status === 'Approved').length;
 }
 
 function renderCharts() {
@@ -152,7 +179,10 @@ function renderCharts() {
     const ctx2 = document.getElementById('statusChart');
     if (!ctx1 || !ctx2) return;
 
-    new Chart(ctx1, {
+    if (window.chartB) window.chartB.destroy();
+    if (window.chartS) window.chartS.destroy();
+
+    window.chartB = new Chart(ctx1, {
         type: 'bar',
         data: {
             labels: branchOptions,
@@ -161,7 +191,7 @@ function renderCharts() {
         options: { maintainAspectRatio: false }
     });
 
-    new Chart(ctx2, {
+    window.chartS = new Chart(ctx2, {
         type: 'doughnut',
         data: {
             labels: ['Pending', 'Approved', 'Rejected'],
@@ -171,6 +201,7 @@ function renderCharts() {
     });
 }
 
+// --- 8. REST OF LOGIC ---
 function renderAccordions() {
     const container = document.getElementById('branch-accordion-container');
     if (!container) return;
@@ -183,7 +214,7 @@ function renderAccordions() {
                     <span>${guards.length} Guards <i class="fas fa-chevron-down"></i></span>
                 </div>
                 <div class="accordion-content">
-                    ${guards.map(g => `<div class="guard-row"><span>${g.first_name} ${g.last_name}</span></div>`).join('') || '<div style="padding:10px;color:#ccc">Empty</div>'}
+                    ${guards.map(g => `<div class="guard-row"><span>${g.first_name} ${g.last_name}</span></div>`).join('') || '<div style="padding:10px; color:#ccc">Empty</div>'}
                 </div>
             </div>`;
     }).join('');
@@ -197,11 +228,10 @@ function renderTrashBin() {
         <tr>
             <td>${app.first_name} ${app.last_name}</td>
             <td><span class="badge rejected">Rejected</span></td>
-            <td><button class="btn-secondary" onclick="restoreApplicant('${app.id}')">Restore</button></td>
-        </tr>`).join('') || '<tr><td colspan="3" style="text-align:center">Trash is empty</td></tr>';
+            <td><button class="btn-primary" onclick="restoreApplicant('${app.id}')">Restore</button></td>
+        </tr>`).join('') || '<tr><td colspan="3" style="text-align:center; padding:20px;">Trash is empty</td></tr>';
 }
 
-// --- 8. UTILITIES ---
 window.rejectApplicant = async function(id) {
     const { error } = await _supabase.from('applicants').update({ status: 'Rejected', updated_at: new Date() }).eq('id', id);
     if (!error) fetchData();
@@ -221,25 +251,31 @@ function updateSidebarUI(section) {
     if (title) title.innerText = section.toUpperCase();
 }
 
-window.toggleSidebar = () => {
+function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     if (sidebar) {
         sidebar.classList.toggle('rail');
+        document.getElementById('header-container')?.classList.toggle('active');
+        document.getElementById('main-content-area')?.classList.toggle('rail-active');
         localStorage.setItem('sidebar_is_rail', sidebar.classList.contains('rail'));
     }
-};
+}
 
-window.applySavedSidebarState = () => {
+function applySavedSidebarState() {
     if (localStorage.getItem('sidebar_is_rail') === 'true') {
         document.getElementById('sidebar')?.classList.add('rail');
+        document.getElementById('header-container')?.classList.add('active');
+        document.getElementById('main-content-area')?.classList.add('rail-active');
     }
-};
-
-window.closeModal = (id) => document.getElementById(id)?.classList.remove('active');
-
-function updateGlobalUI() {
-    if (typeof renderNotifications === 'function') renderNotifications();
-    renderDashboardStats();
 }
+
+function toggleNotifDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('notif-dropdown')?.classList.toggle('active');
+}
+
+function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
+
+document.addEventListener('click', () => document.getElementById('notif-dropdown')?.classList.remove('active'));
 
 loadComponents();
