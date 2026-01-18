@@ -8,13 +8,7 @@ let currentTab = 'dashboard';
 const tabOrder = ['dashboard', 'applicants', 'branches', 'trash'];
 let currentTabIndex = 0;
 let isAnimating = false;
-
-// Global Setup for Sidebar Buttons
-window.loadSection = loadSection;
-window.switchTab = switchTab;
-window.toggleSidebar = toggleSidebar;
-window.closeModal = closeModal;
-window.toggleNotifDropdown = toggleNotifDropdown;
+const branchOptions = ["Manila Main", "Quezon City", "Makati Hub", "Davao Branch", "Cebu Office"];
 
 // --- 2. INITIALIZATION ---
 async function loadComponents() {
@@ -27,6 +21,14 @@ async function loadComponents() {
         document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
         document.getElementById('header-container').innerHTML = await headerRes.text();
 
+        // Attach functions to window so they are globally accessible
+        window.loadSection = loadSection;
+        window.switchTab = switchTab;
+        window.toggleSidebar = toggleSidebar;
+        window.closeModal = closeModal;
+        window.toggleNotifDropdown = toggleNotifDropdown;
+        window.handleLogout = handleLogout;
+
         applySavedSidebarState();
         await loadSection('dashboard');
         fetchData();
@@ -35,13 +37,14 @@ async function loadComponents() {
     }
 }
 
-// --- 3. THE NAVIGATION ENGINE (FIXED) ---
+// --- 3. THE NAVIGATION ENGINE ---
 async function loadSection(sectionName) {
     if (isAnimating) return;
     const target = document.getElementById('main-content-area');
     if (!target) return;
 
-    const newIndex = tabOrder.indexOf(sectionName.replace('-tab', ''));
+    const cleanName = sectionName.replace('-tab', '');
+    const newIndex = tabOrder.indexOf(cleanName);
     const directionClass = newIndex > currentTabIndex ? 'slide-up' : 'slide-down';
     
     isAnimating = true;
@@ -49,7 +52,6 @@ async function loadSection(sectionName) {
 
     setTimeout(async () => {
         try {
-            const cleanName = sectionName.replace('-tab', '');
             const response = await fetch(`sections/${cleanName}.html`);
             const html = await response.text();
             
@@ -68,7 +70,7 @@ async function loadSection(sectionName) {
                 isAnimating = false;
             }, 400);
         } catch (e) { 
-            console.error(e); 
+            console.error("Error loading section:", e); 
             isAnimating = false; 
             target.classList.remove(`${directionClass}-out`);
         }
@@ -88,18 +90,18 @@ async function fetchData() {
 function renderCurrentTab() {
     if (currentTab === 'dashboard') {
         renderDashboardStats();
-        // Check if charts exist in the section before rendering
         if (document.getElementById('branchChart')) renderCharts();
     } else if (currentTab === 'applicants') {
         renderTableRows();
     } else if (currentTab === 'branches') {
-        if (typeof renderAccordions === 'function') renderAccordions();
+        renderAccordions();
     } else if (currentTab === 'trash') {
-        if (typeof renderTrashBin === 'function') renderTrashBin();
+        renderTrashBin();
     }
 }
 
-// --- 5. UI UPDATERS ---
+// --- 5. UI UPDATERS (MGA NAWALA NA FUNCTIONS) ---
+
 function renderDashboardStats() {
     const total = document.getElementById('stat-total');
     const pending = document.getElementById('stat-pending');
@@ -110,6 +112,96 @@ function renderDashboardStats() {
     if (approved) approved.innerText = masterData.filter(a => a.status === 'Approved').length;
 }
 
+function renderTableRows() {
+    const tbody = document.getElementById('applicant-table-body');
+    if (!tbody) return;
+
+    // Filter out Rejected applicants for the main table
+    const activeData = masterData.filter(a => a.status !== 'Rejected');
+
+    tbody.innerHTML = activeData.map(app => `
+        <tr>
+            <td style="padding-left: 20px;">
+                <div style="font-weight: 700;">${app.first_name} ${app.last_name}</div>
+                <div style="font-size: 11px; color: #888;">ID: ${app.id.substring(0,8)}</div>
+            </td>
+            <td>${app.desired_position}</td>
+            <td><span class="badge ${app.status.toLowerCase()}">${app.status}</span></td>
+            <td>
+                <button onclick="openViewModal('${app.id}')" class="btn-hire">View Details</button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" style="text-align:center; padding:20px;">No applicants found.</td></tr>';
+}
+
+function renderCharts() {
+    const ctx1 = document.getElementById('branchChart');
+    const ctx2 = document.getElementById('statusChart');
+    if (!ctx1 || !ctx2) return;
+
+    // Branch Distribution Chart
+    new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: branchOptions,
+            datasets: [{
+                label: 'Guards Deployed',
+                data: branchOptions.map(b => masterData.filter(a => a.assigned_branch === b).length),
+                backgroundColor: '#D2042D'
+            }]
+        },
+        options: { maintainAspectRatio: false }
+    });
+
+    // Status Doughnut Chart
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Approved', 'Rejected'],
+            datasets: [{
+                data: [
+                    masterData.filter(a => a.status === 'Pending').length,
+                    masterData.filter(a => a.status === 'Approved').length,
+                    masterData.filter(a => a.status === 'Rejected').length
+                ],
+                backgroundColor: ['#f39c12', '#2ecc71', '#e74c3c']
+            }]
+        },
+        options: { maintainAspectRatio: false }
+    });
+}
+
+function renderAccordions() {
+    const container = document.getElementById('branch-accordion-container');
+    if (!container) return;
+    container.innerHTML = branchOptions.map(branch => {
+        const guards = masterData.filter(a => a.assigned_branch === branch && a.status === 'Approved');
+        return `
+            <div class="branch-accordion">
+                <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('active')">
+                    <span><i class="fas fa-building"></i> ${branch}</span>
+                    <span>${guards.length} Guards Deployed <i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="accordion-content">
+                    ${guards.map(g => `<div class="guard-row"><span>${g.first_name} ${g.last_name}</span></div>`).join('') || '<p style="padding:10px; color:#ccc;">No guards assigned.</p>'}
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function renderTrashBin() {
+    const tbody = document.getElementById('trash-table-body');
+    if (!tbody) return;
+    const trashed = masterData.filter(a => a.status === 'Rejected');
+    tbody.innerHTML = trashed.map(app => `
+        <tr>
+            <td>${app.first_name} ${app.last_name}</td>
+            <td><span class="badge rejected">Rejected</span></td>
+            <td><button class="btn-secondary" onclick="restoreApplicant('${app.id}')">Restore</button></td>
+        </tr>`).join('') || '<tr><td colspan="3" style="text-align:center; padding:20px;">Trash Bin is empty.</td></tr>';
+}
+
+// --- 6. UTILS & ACTIONS ---
 function updateSidebarUI(name) {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
@@ -119,12 +211,6 @@ function updateSidebarUI(name) {
     });
     const title = document.getElementById('current-title');
     if (title) title.innerText = name.toUpperCase();
-}
-
-// --- 6. UTILS & ACTIONS ---
-function switchTab(tabId, el) {
-    const sectionName = tabId.replace('-tab', '');
-    loadSection(sectionName);
 }
 
 function toggleSidebar() {
@@ -163,5 +249,10 @@ function updateGlobalUI() {
     }
 }
 
-// Start
+async function handleLogout() {
+    await _supabase.auth.signOut();
+    window.location.href = 'AdminLogin.html';
+}
+
+// Start the Dashboard
 loadComponents();
