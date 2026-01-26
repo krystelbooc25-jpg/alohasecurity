@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application - Aloha Security Agency</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="application.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Modern Calendar Picker (Flatpickr) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* Modern adjustments for Date Picker */
+        .date-input-container {
+            position: relative;
+            width: 100%;
+        }
+        .date-input-container i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #002b5c;
+            pointer-events: none;
+            z-index: 10;
+        }
+        /* Custom styling for Flatpickr */
+        .flatpickr-calendar {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+            border-radius: 12px !important;
+            border: 1px solid #eee !important;
+        }
+        .flatpickr-day.selected {
+            background: #002b5c !important;
+            border-color: #002b5c !important;
+        }
+
+        /* AJAX Loading States */
+        #ajax-content {
+            transition: opacity 0.3s ease;
+        }
+        /* --- Modal Overlay & Blur --- */
+.modal-overlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px); /* The background blur */
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* --- Modal Box --- */
+.modal-content {
+    background: #fff;
+    padding: 40px;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+/* --- X Icon Animation --- */
+.error-icon-box {
+    width: 80px;
+    height: 80px;
+    border: 4px solid #f27474;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: shake 0.5s ease-in-out;
+}
+
+.error-icon-x {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.x-line {
+    position: absolute;
+    top: 18px;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #f27474;
+    border-radius: 2px;
+}
+
+.x-line.left { transform: rotate(45deg) scale(0); animation: drawLine 0.3s 0.2s forwards; }
+.x-line.right { transform: rotate(-45deg) scale(0); animation: drawLine 0.3s 0.2s forwards; }
+
+/* --- Keyframes --- */
+@keyframes drawLine {
+    to { transform: rotate(45deg) scale(1); }
+}
+.x-line.right { transform: rotate(-45deg) scale(0); animation: drawLineRight 0.3s 0.2s forwards; }
+@keyframes drawLineRight {
+    to { transform: rotate(-45deg) scale(1); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-10px); }
+    40%, 80% { transform: translateX(10px); }
+}
+
+/* --- Button Style --- */
+.modal-btn-retry {
+    background: #f27474;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.2s;
+}
+
+.modal-btn-retry:hover { background: #e66363; }
+    </style>
+</head>
+<body>
+
+    <!-- Error Modal Structure -->
+    <div id="error-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="error-icon-box">
+                <div class="error-icon-x">
+                    <div class="x-line left"></div>
+                    <div class="x-line right"></div>
+                </div>
+            </div>
+            <h2 id="modal-error-title">Error!</h2>
+            <p id="modal-error-msg">Something went wrong with your application.</p>
+            <button class="modal-btn-retry" onclick="closeErrorModal()">Try Again</button>
+        </div>
+    </div>
+
+    <div class="application-container">
+        <header class="app-header">
+            <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
+            <div class="logo">
+                <img src="Resources/logo.jpg" alt="Logo" style="height: 45px;">
+                <div class="logo-text">
+                    <h2>Job Application</h2>
+                    <p>Aloha Security Agency</p>
+                </div>
+            </div>
+            <div id="step-counter" class="step-counter">Step 1 of 4</div>
+        </header>
+
+        <nav class="progress-bar" id="progress-nav">
+            <div class="step active"><div class="step-number">1</div><div class="step-label">Personal Info</div></div>
+            <div class="connector"></div>
+            <div class="step"><div class="step-number">2</div><div class="step-label">Position Details</div></div>
+            <div class="connector"></div>
+            <div class="step"><div class="step-number">3</div><div class="step-label">Experience</div></div>
+            <div class="connector"></div>
+            <div class="step"><div class="step-number">4</div><div class="step-label">Review & Submit</div></div>
+        </nav>
+
+        <main class="form-container">
+            <!-- 
+                TARGET CONTAINER:
+                Your JavaScript will now find this ID and inject 
+                step1.html, step2.html, etc. inside here.
+            -->
+            <div id="ajax-content">
+                <!-- AJAX will load steps here -->
+            </div>
+
+            <div id="offline-overlay" style="display: none;">
+                <div>
+                    <h1>You are Offline</h1>
+                    <p>Please check your internet connection.</p>
+                </div>
+            </div>
+
+            <footer class="form-footer">
+                <button type="button" id="prev-btn" class="btn btn-secondary" disabled>
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button type="button" id="next-btn" class="btn btn-primary">
+                    Continue <i class="fas fa-arrow-right"></i>
+                </button>
+            </footer>
+        </main>
+    </div>
+
+    <!-- 
+        JS reference: Ensure your application.js is in the 
+        correct folder. I noticed you used "js/application.js" 
+    -->
+    <script src="js/application.js"></script>
+
+</body>
+</html>

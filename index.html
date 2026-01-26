@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aloha Security Agency</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* --- UPDATED SLIDER CSS --- */
+        .hero {
+            position: relative;
+            height: 80vh;
+            min-height: 500px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            background-color: #1a1a1a;
+        }
+
+        .hero-slides {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .slide.active { opacity: 1; }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 2;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+
+        /* --- NEXT & PREV BUTTONS --- */
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            background: rgba(210, 4, 45, 0.5); /* Semi-transparent Red */
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slider-btn:hover {
+            background: rgba(210, 4, 45, 1); /* Solid Red on hover */
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .prev-btn { left: 20px; }
+        .next-btn { right: 20px; }
+
+        /* BUTTON SPACING */
+        nav .btn { margin-left: 10px; }
+        .hero-btn-group { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+
+        @media (max-width: 480px) {
+            .slider-btn { width: 40px; height: 40px; font-size: 1rem; }
+            .prev-btn { left: 10px; }
+            .next-btn { right: 10px; }
+            .hero-btn-group { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="spinner"></div>
+    </div>
+
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="Resources/logo.jpg" alt="Logo" style="height: 50px;">
+                <div class="logo-text">
+                    <h1>Aloha Security Agency</h1>
+                    <p>Your Trusted Security Partner</p>
+                </div>
+            </div>
+            <nav>
+                <!-- NEW LINK: CHECK STATUS -->
+                <a href="applicant-portal.html" class="btn btn-secondary"><i class="fas fa-search"></i> Check Status</a>
+                <a href="application.html" class="btn btn-primary">Apply Now</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-slides">
+                <div class="slide active" style="background-image: url('Resources/1.jpg');"></div>
+                <div class="slide" style="background-image: url('Resources/2.jpg');"></div>
+                <div class="slide" style="background-image: url('Resources/3.jpg');"></div>
+            </div>
+
+            <button class="slider-btn prev-btn" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+            <button class="slider-btn next-btn" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+
+            <div class="hero-overlay"></div>
+            
+            <div class="container hero-content">
+                <h2>Join Our Elite Security Team</h2>
+                <p>Protecting what matters most. Build a career with a trusted and professional agency.</p>
+                
+                <div class="hero-btn-group">
+                    <a href="application.html" class="btn btn-primary hero-btn"><i class="fas fa-file-alt"></i> Start Your Application</a>
+                    <!-- NEW LINK: TRACK PROGRESS -->
+                    <a href="applicant-portal.html" class="btn btn-secondary hero-btn"><i class="fas fa-clock"></i> Track My Progress</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="why-choose-us">
+            <div class="container">
+                 <h2>Why Choose Aloha Security?</h2>
+                 <div class="features">
+                    <div class="feature-item">
+                        <div class="icon"><i class="fas fa-users"></i></div>
+                        <h3>Professional Training</h3>
+                        <p>Comprehensive security training programs and ongoing professional development.</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <h3>Local Opportunities</h3>
+                        <p>Serve your community across multiple locations with flexible scheduling options.</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon"><i class="fas fa-check-circle"></i></div>
+                        <h3>Competitive Benefits</h3>
+                        <p>Excellent compensation package with health benefits and career advancement.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Aloha Security Agency. All Rights Reserved.</p>
+            <!-- OPTIONAL: HIDDEN LINK FOR ADMINS -->
+            <a href="AdminLogin.html" style="color: rgba(255,255,255,0.2); text-decoration: none; font-size: 10px;">Admin Portal</a>
+        </div>
+    </footer>
+
+    <script>
+        window.addEventListener('load', () => {
+            const ls = document.getElementById('loading-screen');
+            ls.style.opacity = '0';
+            setTimeout(() => ls.style.display = 'none', 500);
+        });
+
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        let slideTimer;
+
+        function showSlide(index) {
+            slides.forEach(s => s.classList.remove('active'));
+            slides[index].classList.add('active');
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+            resetTimer();
+        }
+
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(currentSlide);
+            resetTimer();
+        }
+
+        function startTimer() {
+            slideTimer = setInterval(() => {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            }, 5000);
+        }
+
+        function resetTimer() {
+            clearInterval(slideTimer);
+            startTimer();
+        }
+
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        if (slides.length > 1) {
+            startTimer();
+        }
+    </script>
+</body>
+</html>

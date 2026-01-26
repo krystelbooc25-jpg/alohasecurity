@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Details - Aloha Security</title>
+    <link rel="stylesheet" href="view-applicant.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-red: #D2042D;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #1a1a1a;
+        }
+
+        body.dark-mode {
+            --bg-color: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --text-main: #f0f0f0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: 0.3s;
+        }
+
+        /* Admin Action Buttons */
+        .admin-actions {
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(210, 4, 45, 0.05);
+            border-radius: 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            border: 1px solid var(--primary-red);
+        }
+
+        .btn-approve { background: #2ecc71 !important; color: white !important; cursor: pointer; }
+        .btn-reject { background: #e74c3c !important; color: white !important; cursor: pointer; }
+        
+        /* Modal Styling */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.85); 
+            z-index: 2000; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px;
+        }
+        .modal-content { 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 15px; 
+            width: 100%; 
+            max-width: 400px; 
+            text-align: center; 
+            color: var(--text-main);
+        }
+
+        .branch-select { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 20px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .id-img {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        pre {
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="page-header">
+            <div class="header-left" style="display:flex; align-items:center; gap:15px;">
+                <a href="main-dashboard.html" class="back-link" style="text-decoration:none; color:inherit;"><i class="fas fa-arrow-left"></i> Dashboard</a>
+                <h1 style="color:var(--primary-red);">Applicant Details</h1>
+            </div>
+        </header>
+
+        <div class="applicant-card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid #eee;">
+                <div class="profile-info" style="display:flex; align-items:center; gap:20px;">
+                    <div class="avatar" style="width:60px; height:60px; background:var(--primary-red); color:white; border-radius:50%; display:grid; place-items:center; font-size:24px;"><i class="fas fa-user-shield"></i></div>
+                    <div>
+                        <h2 id="display-name">Loading...</h2>
+                        <p id="display-pos" style="color:#888;">Position: Loading...</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <a id="resume-link" href="#" target="_blank" class="btn btn-secondary" style="padding:10px 20px; border:1px solid #ddd; border-radius:8px; text-decoration:none; color:inherit;"><i class="fas fa-file-pdf"></i> View Resume</a>
+                </div>
+            </div>
+
+            <div class="card-body" style="padding:20px;">
+                <div class="detail-section" style="margin-bottom:25px;">
+                    <h3><i class="fas fa-info-circle"></i> Profile Information</h3>
+                    <div class="grid-layout" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:15px;">
+                        <p><strong>Email:</strong> <span id="app-email"></span></p>
+                        <p><strong>Phone:</strong> <span id="app-phone"></span></p>
+                        <p><strong>Birthday:</strong> <span id="app-dob"></span></p>
+                        <p><strong>Salary:</strong> <span id="app-salary"></span></p>
+                    </div>
+                </div>
+
+                <div class="detail-section" style="margin-bottom:25px;">
+                    <h3><i class="fas fa-id-card"></i> Documents</h3>
+                    <p style="margin:10px 0;"><strong>ID Type:</strong> <span id="app-id-type"></span></p>
+                    <img id="app-id-img" src="" alt="ID Photo" class="id-img" onclick="window.open(this.src)">
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-history"></i> Experience</h3>
+                    <pre id="app-exp" style="margin-top:10px;"></pre>
+                </div>
+
+                <!-- ADMIN BUTTONS -->
+                <div class="admin-actions">
+                    <button class="btn btn-reject" onclick="updateStatus('Rejected')"><i class="fas fa-times"></i> Reject Applicant</button>
+                    <button class="btn btn-approve" onclick="openModal()"><i class="fas fa-check"></i> Approve & Deploy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal" id="assignModal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary-red);">Assign Branch</h2>
+            <p>Select location for deployment:</p>
+            <select id="branch-input" class="branch-select">
+                <option value="">-- Select Branch --</option>
+                <option value="Manila Main">Manila Main</option>
+                <option value="Quezon City">Quezon City</option>
+                <option value="Makati Hub">Makati Hub</option>
+                <option value="Davao Branch">Davao Branch</option>
+                <option value="Cebu Office">Cebu Office</option>
+            </select>
+            <button class="btn-approve" style="width:100%; padding:12px; border-radius:8px; font-weight:bold;" onclick="confirmApproval()">Confirm Deployment</button>
+            <p style="margin-top:15px; cursor:pointer; color:#888;" onclick="closeModal()">Cancel</p>
+        </div>
+    </div>
+
+    <script>
+        // 1. SUPABASE INIT
+        const supabaseUrl = 'https://kkaelwhdcsgaodbhrxqt.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrYWVsd2hkY3NnYW9kYmhyeHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTA4NzksImV4cCI6MjA3MTc2Njg3OX0.wSFv1AZgZDXjGHiIwOHyWzqTDk0v6NbR4-2r90iF9ok';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 2. GET ID FROM URL (Global variable)
+        const params = new URLSearchParams(window.location.search);
+        const applicantId = params.get('id');
+
+        // Check Theme
+        if (localStorage.getItem('admin-theme') === 'dark') document.body.classList.add('dark-mode');
+
+        async function loadDetails() {
+            if (!applicantId) {
+                alert("Error: No ID found in URL");
+                return;
+            }
+
+            const { data: app, error } = await _supabase.from('applicants').select('*').eq('id', applicantId).single();
+            if (error) {
+                console.error("Error fetching details:", error);
+                return;
+            }
+
+            // Populate UI
+            document.getElementById('display-name').innerText = (app.first_name || '') + " " + (app.last_name || '');
+            document.getElementById('display-pos').innerText = "Applying for: " + (app.desired_position || 'Guard');
+            document.getElementById('app-email').innerText = app.email || 'N/A';
+            document.getElementById('app-phone').innerText = app.phone || 'N/A';
+            document.getElementById('app-dob').innerText = app.dob || 'N/A';
+            document.getElementById('app-salary').innerText = app.salary_range || 'N/A';
+            document.getElementById('app-id-type').innerText = app.id_type || 'N/A';
+            document.getElementById('app-exp').innerText = app.security_experience || 'No experience listed.';
+            
+            if (app.resume_url) document.getElementById('resume-link').href = app.resume_url;
+            if (app.valid_id_url) document.getElementById('app-id-img').src = app.valid_id_url;
+        }
+
+        // --- REJECT ACTION ---
+        async function updateStatus(newStatus) {
+            if (!confirm(`Are you sure you want to ${newStatus} this applicant?`)) return;
+
+            console.log(`Sending update for ID: ${applicantId} to status: ${newStatus}`);
+
+            const { data, error } = await _supabase
+                .from('applicants')
+                .update({ status: newStatus })
+                .eq('id', applicantId)
+                .select();
+
+            if (error) {
+                console.error("Supabase Error:", error);
+                alert("Update failed: " + error.message);
+            } else {
+                console.log("Update success:", data);
+                alert("Applicant has been " + newStatus);
+                window.location.href = 'main-dashboard.html';
+            }
+        }
+
+        // --- APPROVE ACTION ---
+        async function confirmApproval() {
+            const branch = document.getElementById('branch-input').value;
+            if (!branch) {
+                alert("Please select a branch first!");
+                return;
+            }
+
+            console.log(`Approving ID: ${applicantId} for branch: ${branch}`);
+
+            const { data, error } = await _supabase
+                .from('applicants')
+                .update({ 
+                    status: 'Approved', 
+                    assigned_branch: branch 
+                })
+                .eq('id', applicantId)
+                .select();
+
+            if (error) {
+                console.error("Supabase Error:", error);
+                alert("Approval Failed: " + error.message);
+            } else {
+                console.log("Approval success:", data);
+                alert("Applicant Approved and Deployed!");
+                window.location.href = 'main-dashboard.html';
+            }
+        }
+
+        // Modal Controls
+        function openModal() { document.getElementById('assignModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('assignModal').style.display = 'none'; }
+
+        // Start loading
+        loadDetails();
+    </script>
+</body>
+</html>
