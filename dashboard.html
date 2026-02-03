@@ -15,6 +15,7 @@
     
     <!-- Font Awesome 6 for Modern Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="Dashboard.css">
     
     <!-- Heavy Libraries for Data and Visuals -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -22,329 +23,7 @@
 
     <style>
         /* --- 2. BRANDING & THEME VARIABLES --- */
-        :root {
-            --primary-red: #D2042D;
-            --active-red: #A00322;
-            --dark-slate: #0f172a;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --background: #f8fafc;
-            --sidebar-width: 280px;
-            --sidebar-collapsed-width: 88px;
-            /* Smooth timing for all animations */
-            --transition-smooth: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            --bento-radius: 24px;
-            --shadow-sm: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
-            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
-        }
-
-        /* --- 3. BASE RESET --- */
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-        }
         
-        body { 
-            background-color: var(--background); 
-            display: flex; 
-            min-height: 100vh; 
-            color: var(--text-main); 
-            overflow-x: hidden; 
-        }
-
-        /* --- 4. SIDEBAR DESIGN (RETAINED STYLE) --- */
-        .sidebar { 
-            width: var(--sidebar-width); 
-            background-color: var(--primary-red); 
-            color: white; 
-            display: flex; 
-            flex-direction: column; 
-            position: fixed; 
-            height: 100vh; 
-            z-index: 1100; 
-            transition: var(--transition-smooth);
-            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
-        }
-
-        .sidebar-logo { 
-            padding: 40px 15px; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 20px;
-            transition: var(--transition-smooth);
-        }
-
-        .sidebar-toggle-btn {
-            color: white;
-            cursor: pointer;
-            background: rgba(0,0,0,0.1);
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.3s;
-            font-size: 1.2rem;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sidebar-toggle-btn:hover { 
-            background: rgba(0,0,0,0.2); 
-            transform: scale(1.05); 
-        }
-
-        .sidebar-logo img { 
-            width: 95px; 
-            height: 95px; 
-            border-radius: 30px; 
-            border: 6px solid rgba(255,255,255,0.2); 
-            background: white; 
-            object-fit: cover;
-            transition: var(--transition-smooth);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-        }
-
-        .sidebar-logo h2 {
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: 4px;
-            margin: 0;
-            transition: var(--transition-smooth);
-        }
-
-        /* Sidebar States */
-        .sidebar.collapsed { width: var(--sidebar-collapsed-width); }
-        .sidebar.collapsed .sidebar-logo h2, 
-        .sidebar.collapsed .nav-item span { display: none; opacity: 0; }
-        .sidebar.collapsed .sidebar-logo img { width: 55px; height: 55px; border-radius: 15px; }
-        .sidebar.collapsed .nav-item { justify-content: center; padding: 20px 0; }
-
-        .nav-item { 
-            padding: 16px 30px; 
-            color: rgba(255,255,255,0.7); 
-            text-decoration: none !important; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            cursor: pointer; 
-            transition: var(--transition-smooth);
-            font-weight: 600;
-            margin: 4px 15px;
-            border-radius: 18px;
-        }
-
-        .nav-item i { width: 25px; font-size: 1.2rem; text-align: center; }
-        .nav-item:hover { background: rgba(255, 255, 255, 0.1); color: white; }
-        .nav-item.active { 
-            background: white; 
-            color: var(--primary-red); 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
-        }
-
-        /* --- 5. CONTENT AREA WRAPPER --- */
-        .main-content { 
-            margin-left: var(--sidebar-width); 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            width: 100%; 
-            transition: var(--transition-smooth); 
-        }
-
-        .main-content.sidebar-collapsed { margin-left: var(--sidebar-collapsed-width); }
-
-        .header-bar { 
-            background: rgba(255, 255, 255, 0.8); 
-            backdrop-filter: blur(15px);
-            padding: 0 45px; 
-            height: 100px;
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
-            border-bottom: 1px solid rgba(0,0,0,0.04);
-        }
-
-        /* --- 6. MODERN BENTO COMPONENTS --- */
-        .content-body { padding: 45px; max-width: 1600px; margin: 0 auto; width: 100%; }
-
-        /* Modern Bento Stat Cards */
-        .stat-card { 
-            background: white; 
-            padding: 30px; 
-            border-radius: var(--bento-radius); 
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition-smooth); 
-            height: 100%; 
-            border: 1px solid rgba(0,0,0,0.03);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card:hover { 
-            transform: translateY(-8px) scale(1.02); 
-            box-shadow: var(--shadow-lg); 
-            border-color: rgba(210, 4, 45, 0.1);
-        }
-
-        /* Icons inside the stats */
-        .stat-icon-box {
-            width: 55px; height: 55px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 25px;
-            font-size: 1.4rem;
-            transition: 0.5s ease;
-        }
-
-        .stat-card:hover .stat-icon-box {
-            transform: rotate(-10deg) scale(1.1);
-        }
-
-        /* Icon Colors */
-        .icon-red { background: #fee2e2; color: #dc2626; }
-        .icon-orange { background: #fef3c7; color: #d97706; }
-        .icon-green { background: #dcfce7; color: #16a34a; }
-        .icon-blue { background: #dbeafe; color: #2563eb; }
-
-        .stat-card .value { 
-            font-size: 44px; 
-            font-weight: 900; 
-            margin: 0; 
-            color: var(--dark-slate); 
-            line-height: 1; 
-            letter-spacing: -1.5px;
-        }
-
-        .stat-card h4 { 
-            color: var(--text-muted); 
-            font-size: 0.8rem; 
-            text-transform: uppercase; 
-            letter-spacing: 1.5px; 
-            font-weight: 800; 
-            margin-bottom: 8px; 
-        }
-        
-        /* General Bento Box container for Charts/Tables */
-        .bento-box { 
-            background: white; 
-            border-radius: var(--bento-radius); 
-            box-shadow: var(--shadow-sm); 
-            overflow: hidden; 
-            border: 1px solid rgba(0,0,0,0.03);
-            padding: 35px;
-            transition: 0.3s ease;
-        }
-
-        .bento-box:hover { box-shadow: var(--shadow-lg); }
-
-        /* --- 7. UI ELEMENTS (TABLES & BUTTONS) --- */
-        .badge-pending { background: #fef3c7; color: #92400e; padding: 10px 20px; border-radius: 14px; font-size: 12px; font-weight: 700; }
-        .badge-approved { background: #dcfce7; color: #166534; padding: 10px 20px; border-radius: 14px; font-size: 12px; font-weight: 700; }
-        .badge-rejected { background: #fee2e2; color: #991b1b; padding: 10px 20px; border-radius: 14px; font-size: 12px; font-weight: 700; }
-
-        .btn-action {
-            width: 42px; height: 42px;
-            border-radius: 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s ease-in-out;
-            border: none;
-            font-size: 1rem;
-        }
-        .btn-view { background: #f1f5f9; color: #64748b; }
-        .btn-view:hover { background: var(--primary-red); color: white; transform: translateY(-2px); }
-        .btn-delete { background: #fff1f2; color: #e11d48; }
-        .btn-delete:hover { background: #e11d48; color: white; transform: translateY(-2px); }
-
-        /* --- 8. BRANCH ACCORDIONS --- */
-        .branch-accordion { 
-            margin-bottom: 25px; 
-            border-radius: 24px; 
-            overflow: hidden; 
-            background: white; 
-            border: 1px solid rgba(0,0,0,0.05); 
-            transition: 0.4s; 
-        }
-        .accordion-header-custom { 
-            padding: 30px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            cursor: pointer; 
-            font-weight: 700; 
-            font-size: 1.1rem;
-        }
-        .accordion-content { 
-            max-height: 0; 
-            overflow: hidden; 
-            transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
-            background: #fafafa; 
-        }
-        .accordion-content.active { 
-            max-height: 2500px; 
-            border-top: 1px solid #f1f5f9; 
-        }
-
-        /* --- 9. MODALS & FORMS --- */
-        .modal-overlay { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(15, 23, 42, 0.7); 
-            backdrop-filter: blur(10px); 
-            display: none; 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 3000; 
-        }
-        .modal-box { 
-            background: white; 
-            width: 95%; 
-            max-width: 480px; 
-            padding: 60px; 
-            border-radius: 40px; 
-            text-align: center; 
-            box-shadow: 0 40px 80px rgba(0,0,0,0.4); 
-            animation: modalPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
-        }
-        @keyframes modalPop { 
-            from { transform: scale(0.8); opacity: 0; } 
-            to { transform: scale(1); opacity: 1; } 
-        }
-        .modal-overlay.active { display: flex; }
-
-        .form-control, .form-select { 
-            border-radius: 16px; 
-            padding: 15px 20px; 
-            border: 1px solid #e2e8f0; 
-            font-weight: 500; 
-            transition: 0.3s; 
-        }
-        .form-control:focus { 
-            box-shadow: 0 0 0 5px rgba(210, 4, 45, 0.1); 
-            border-color: var(--primary-red); 
-        }
-
-        .hidden { display: none; }
-
-        @media (max-width: 992px) {
-            .sidebar { left: -280px; }
-            .sidebar.open { left: 0; }
-            .main-content { margin-left: 0 !important; }
-            .menu-toggle-mobile { display: block !important; cursor: pointer; font-size: 2rem; color: var(--primary-red); }
-        }
     </style>
 </head>
 <body>
@@ -403,25 +82,24 @@
 
     <!-- 11. SIDEBAR STRUCTURE -->
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-logo">
-            <div class="sidebar-toggle-btn d-none d-lg-flex" onclick="toggleSidebarDesktop()">
-                <i class="fas fa-bars-staggered"></i>
+        <div class="logo-card-wrapper">
+            <div class="logo-card">
+                <div class="logo-img-container">
+                <img src="Resources/logo.jpg" alt="Logo"></div>
+                <div class="logo-details">
+                <h2 class="logo-title">ALOHA</h2>
+                <p class="logo-subtitle">Security Agency</p>
             </div>
-            <img src="Resources/logo.jpg" alt="Aloha Security Logo">
-            <h2 class="mt-2 text-uppercase">ALOHA</h2>
+            </div>
         </div>
+        <div class="nav-item active" onclick="switchTab('dashboard-tab', this)"><i class="fas fa-th-large"></i> Dashboard</div>
+        <div class="nav-item" onclick="switchTab('applicants-tab', this)"><i class="fas fa-user-shield"></i> Applicants</div>
+        <div class="nav-item" onclick="switchTab('branches-tab', this)"><i class="fas fa-map-marked-alt"></i> Branch View</div>
+        <!-- TRASH BIN LINK (ADDED) -->
+        <div class="nav-item" onclick="switchTab('trash-tab', this)"><i class="fas fa-trash-alt"></i> Trash Bin</div>
         
-        <nav class="mt-4 flex-grow-1">
-            <div class="nav-item active" onclick="switchTab('dashboard-tab', this)"><i class="fas fa-grip-vertical"></i> <span>Dashboard</span></div>
-            <div class="nav-item" onclick="switchTab('applicants-tab', this)"><i class="fas fa-users-viewfinder"></i> <span>Applications</span></div>
-            <div class="nav-item" onclick="switchTab('branches-tab', this)"><i class="fas fa-map-location-dot"></i> <span>Branch View</span></div>
-            <div class="nav-item" onclick="switchTab('trash-tab', this)"><i class="fas fa-trash-can"></i> <span>Trash Bin</span></div>
-        </nav>
-        
-        <div class="pb-5">
-            <div class="nav-item" onclick="handleLogout()" style="background: rgba(0,0,0,0.1); margin-top: 25px;">
-                <i class="fas fa-power-off"></i> <span>Logout System</span>
-            </div>
+        <div style="margin-top: auto; padding-bottom: 20px;">
+            <div class="nav-item" onclick="handleLogout()" style="border-top: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-sign-out-alt"></i> Logout</div>
         </div>
     </aside>
 
